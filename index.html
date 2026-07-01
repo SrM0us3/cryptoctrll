@@ -1,0 +1,3601 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>CryptoCtrl</title>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDGQm-ttG-hpC_P6IPf8BnTF69ngLi05K0",
+    authDomain: "cryptoctrl-72d53.firebaseapp.com",
+    projectId: "cryptoctrl-72d53",
+    storageBucket: "cryptoctrl-72d53.firebasestorage.app",
+    messagingSenderId: "400452394105",
+    appId: "1:400452394105:web:7c57dcc7bc320606e8c8a8"
+  };
+
+  const fbApp = initializeApp(firebaseConfig);
+  const db    = getFirestore(fbApp);
+
+  // ID fixo do usuário — todos os dispositivos do mesmo usuário usam o mesmo doc
+  const USER_DOC = 'srmouse';
+
+  // Expor funções para o código principal
+  window._fbSave = async (data) => {
+    try {
+      await setDoc(doc(db, 'cryptoctrll', USER_DOC), data, {merge:false});
+      return true;
+    } catch(e){ console.warn('Firebase save error:', e); return false; }
+  };
+
+  window._fbLoad = async () => {
+    try {
+      const snap = await getDoc(doc(db, 'cryptoctrll', USER_DOC));
+      return snap.exists() ? snap.data() : null;
+    } catch(e){ console.warn('Firebase load error:', e); return null; }
+  };
+
+  // Escuta mudanças em tempo real (outro dispositivo salvou)
+  window._fbListen = (callback) => {
+    return onSnapshot(doc(db, 'cryptoctrll', USER_DOC), (snap) => {
+      if(snap.exists()) callback(snap.data());
+    }, (e) => console.warn('Firebase listen error:', e));
+  };
+
+  window._fbReady = true;
+  window.dispatchEvent(new Event('firebase-ready'));
+</script>
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22CryptoCtrl%22%2C%22short_name%22%3A%22CryptoCtrl%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230d1117%22%2C%22theme_color%22%3A%22%230d1117%22%2C%22orientation%22%3A%22portrait%22%7D">
+
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%230d1117'/%3E%3Ccircle cx='32' cy='32' r='28' fill='%23161b22'/%3E%3Cpath d='M32 10 L38 22 L52 24 L42 34 L44 48 L32 42 L20 48 L22 34 L12 24 L26 22 Z' fill='%23f7931a' opacity='0.15'/%3E%3Ccircle cx='32' cy='32' r='14' fill='none' stroke='%23f7931a' stroke-width='2'/%3E%3Ctext x='32' y='37' text-anchor='middle' font-family='Arial Black,sans-serif' font-size='13' font-weight='900' fill='%23f7931a'%3E%24%3C/text%3E%3Ccircle cx='46' cy='18' r='8' fill='%23e8c44a'/%3E%3Ctext x='46' y='22' text-anchor='middle' font-family='Arial Black,sans-serif' font-size='9' font-weight='900' fill='%230d1117'%3ETC%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%230d1117'/%3E%3Ccircle cx='90' cy='90' r='70' fill='%23161b22'/%3E%3Ccircle cx='90' cy='90' r='50' fill='none' stroke='%23f7931a' stroke-width='5'/%3E%3Cpath d='M90 50 L100 72 L125 76 L107 94 L111 120 L90 109 L69 120 L73 94 L55 76 L80 72 Z' fill='%23f7931a' opacity='0.2'/%3E%3Ctext x='90' y='107' text-anchor='middle' font-family='Arial Black,sans-serif' font-size='42' font-weight='900' fill='%23f7931a'%3E%24%3C/text%3E%3Ccircle cx='138' cy='42' r='26' fill='%23e8c44a'/%3E%3Ctext x='138' y='50' text-anchor='middle' font-family='Arial Black,sans-serif' font-size='18' font-weight='900' fill='%230d1117'%3ETC%3C/text%3E%3C/svg%3E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CryptoCtrl">
+<meta name="theme-color" content="#0d1117">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Noto+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#1c2230;--border:#2a3040;
+  --accent:#f7931a;--accent2:#e8c44a;--green:#3fb950;--green-dark:#1e6e30;
+  --red:#f85149;--blue:#58a6ff;--purple:#a371f7;--tcmc:#38bdf8;
+  --text:#e6edf3;--muted:#7d8590;--radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Noto Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* HOME */
+#homeScreen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;gap:24px;background:var(--bg);overflow-y:auto;z-index:1;}
+.home-logo{font-family:'Rajdhani',sans-serif;font-size:34px;font-weight:700;color:var(--accent);letter-spacing:2px;text-align:center;}
+.home-logo span{color:var(--accent2);}
+.home-sub{font-size:13px;color:var(--muted);text-align:center;margin-top:-16px;}
+.eco-cards{display:flex;flex-direction:column;gap:14px;width:100%;max-width:340px;}
+.eco-card{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:20px 22px;cursor:pointer;display:flex;align-items:center;gap:16px;transition:border-color .15s;}
+.eco-card:active{background:var(--surface2);}
+.eco-card.ttcoin{border-color:rgba(247,147,26,.3);}
+.eco-card.jumptask{border-color:rgba(163,113,247,.3);}
+.eco-icon{width:48px;height:48px;flex:none;display:flex;align-items:center;justify-content:center;}
+.eco-name{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;}
+.eco-desc{font-size:12px;color:var(--muted);margin-top:2px;}
+.ttcoin .eco-name{color:var(--accent);}
+.jumptask .eco-name{color:var(--purple);}
+
+/* APP SCREEN */
+#appScreen{position:fixed;inset:0;display:none;padding-bottom:96px;background:var(--bg);overflow-y:auto;z-index:1;}
+
+/* HEADER */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 14px 6px;position:sticky;top:0;z-index:100;}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.logo{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.logo-back{font-size:22px;cursor:pointer;color:var(--muted);line-height:1;}
+.logo-ttcoin{color:var(--accent);}
+.logo-ttcoin span{color:var(--accent2);}
+.logo-jt{color:var(--purple);}
+.hdr-right{display:flex;gap:5px;align-items:center;}
+.icon-btn{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;padding:4px 8px;border-radius:20px;cursor:pointer;font-family:'Noto Sans',sans-serif;}
+.day-badge{background:var(--accent);color:#000;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:13px;padding:4px 12px;border-radius:20px;cursor:pointer;}
+
+/* TABS */
+.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex:none;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--muted);transition:all .15s;font-family:'Noto Sans',sans-serif;}
+.tab.active{background:var(--accent);border-color:var(--accent);color:#000;}
+
+/* DAY BAR (global) */
+.day-bar{display:flex;gap:4px;padding:8px 14px;overflow-x:auto;scrollbar-width:none;background:var(--surface2);border-bottom:1px solid var(--border);}
+.day-bar::-webkit-scrollbar{display:none;}
+.daybtn{flex:none;width:42px;height:42px;border-radius:50%;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;font-family:'Noto Sans',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:all .15s;}
+.daybtn.today{border-color:var(--accent2);color:var(--accent2);}
+.daybtn.active{background:var(--accent);border-color:var(--accent);color:#000;}
+.daybtn .dprog{font-size:8px;font-weight:700;}
+
+/* WEEK BAR */
+.week-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:7px 14px;display:flex;align-items:center;justify-content:space-between;}
+.week-info{font-size:11px;color:var(--muted);}
+.week-info strong{color:var(--accent2);}
+.fin-btn{background:transparent;border:1px solid var(--accent);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:'Noto Sans',sans-serif;transition:all .3s;}
+.fin-btn.urgente{background:var(--green);border-color:var(--green);color:#fff;animation:pulse-fin 1.5s infinite;}
+@keyframes pulse-fin{0%,100%{box-shadow:0 0 0 0 rgba(63,185,80,.5);}50%{box-shadow:0 0 0 6px rgba(63,185,80,0);}}
+
+/* BANNER FINALIZAR */
+.fin-banner{
+  display:none;background:linear-gradient(135deg,var(--green),#2ea84a);
+  color:#fff;padding:10px 16px;font-size:12px;font-weight:600;
+  font-family:'Noto Sans',sans-serif;line-height:1.5;
+  border-bottom:1px solid rgba(255,255,255,.2);
+  cursor:pointer;
+}
+.fin-banner.show{display:block;}
+.fin-banner-title{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;margin-bottom:2px;}
+.fin-banner-sub{font-size:11px;opacity:.9;}
+
+/* CONTENT */
+.content{padding:10px 14px;}
+
+/* SALDO CARD */
+.saldo-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;}
+.saldo-hdr{padding:9px 14px;background:var(--surface2);border-bottom:1px solid var(--border);}
+.saldo-hdr-title{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:var(--accent2);}
+.saldo-row{display:flex;align-items:center;padding:7px 14px;gap:8px;border-bottom:1px solid var(--border);}
+.saldo-row:last-child{border-bottom:none;}
+.saldo-name{font-size:11px;font-weight:600;flex:1;line-height:1.4;}
+.saldo-right{display:flex;align-items:center;gap:6px;justify-content:flex-end;}
+.saldo-email{font-size:9px;color:var(--muted);}
+.saldo-dtreg{font-size:9px;color:var(--blue);margin-top:1px;}
+.saldo-input{background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:13px;font-weight:700;padding:4px 8px;border-radius:6px;width:100px;text-align:right;font-family:'Rajdhani',sans-serif;}
+.saldo-input:focus{outline:none;border-color:var(--accent);}
+.saldo-total{font-size:11px;font-weight:700;min-width:72px;text-align:right;transition:color .3s;}
+.saldo-total.red{color:var(--red);}
+.saldo-total.yellow{color:var(--accent2);}
+.saldo-total.green{color:var(--green);}
+
+/* SAQUE */
+.saque-info{font-size:9px;color:var(--muted);margin-top:2px;line-height:1.5;}
+.saque-btn{background:transparent;border:1px solid var(--muted);color:var(--muted);border-radius:5px;font-size:9px;font-weight:600;padding:2px 6px;cursor:pointer;font-family:'Noto Sans',sans-serif;margin-top:3px;display:block;transition:all .15s;}
+.saque-btn:active{border-color:var(--green);color:var(--green);}
+.saldo-left{flex:1;}
+
+/* MODAL SAQUE */
+.saque-modal-acc{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.saque-modal-sub{font-size:12px;color:var(--muted);margin-bottom:16px;}
+.saque-modal-label{font-size:12px;color:var(--muted);margin-bottom:6px;}
+.saque-modal-input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:18px;font-weight:700;padding:10px 12px;border-radius:8px;text-align:right;font-family:'Rajdhani',sans-serif;margin-bottom:14px;}
+.saque-modal-input:focus{outline:none;border-color:var(--green);}
+.saque-confirm-btn{width:100%;padding:13px;background:var(--green);border:none;color:#fff;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:.5px;}
+
+/* COLETA CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;}
+.card-hdr{padding:9px 14px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:var(--accent2);}
+.card-sub{font-size:10px;color:var(--muted);}
+.reset-btn{background:transparent;border:1px solid var(--red);color:var(--red);border-radius:6px;font-size:10px;font-weight:600;padding:3px 8px;cursor:pointer;font-family:'Noto Sans',sans-serif;}
+
+/* ACC ROW */
+.acc-row{display:flex;align-items:center;padding:7px 14px;border-bottom:1px solid var(--border);gap:6px;}
+.acc-row:last-child{border-bottom:none;}
+.acc-name{font-size:11px;font-weight:600;flex:1;line-height:1.3;}
+.acc-email-s{display:none;}
+.dots-wrap{display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end;}
+
+/* DOTS */
+.dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:var(--surface2);cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;font-size:0;flex:none;}
+.dot:active{transform:scale(.82);}
+.dot.checked{background:var(--green);border-color:var(--green);box-shadow:0 0 7px rgba(63,185,80,.35);}
+.dot.checked::after{content:'✓';font-size:14px;color:#fff;font-weight:700;}
+.dot.missed{background:transparent;border-color:var(--red);}
+.dot.missed::after{content:'✕';font-size:13px;color:var(--red);font-weight:700;}
+/* TC dot (top of farm slot) - dark green */
+.dot.tc-dot.checked{background:var(--green-dark);border-color:var(--green-dark);box-shadow:0 0 7px rgba(30,110,48,.5);}
+
+/* FARMING SLOT — tamanho fixo, sempre igual com 1 ou 3 bolinhas */
+.farm-slot{
+  display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px;border:1px solid var(--border);border-radius:6px;
+  background:var(--bg);
+  width:46px;height:46px;flex:none;
+}
+.farm-slot .dot{width:16px;height:16px;}
+.farm-slot .dot.checked::after{font-size:9px;}
+.farm-slot .dot.missed::after{font-size:9px;}
+.farm-slot-bottom{display:flex;gap:2px;}
+
+/* Grid 5 colunas × 2 linhas para farming */
+.farm-dots-grid{
+  display:grid;
+  grid-template-columns:repeat(5,46px);
+  gap:4px;
+}
+
+/* GANSO TOGGLE */
+.ganso-wrap{display:flex;align-items:center;gap:5px;margin-top:3px;}
+.ganso-toggle{width:32px;height:17px;border-radius:9px;background:var(--border);position:relative;cursor:pointer;transition:background .2s;flex:none;border:none;}
+.ganso-toggle.on{background:var(--accent2);}
+.ganso-toggle::after{content:'';position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;transition:left .2s;}
+.ganso-toggle.on::after{left:17px;}
+.ganso-label{font-size:9px;color:var(--muted);}
+.ganso-label.on{color:var(--accent2);}
+
+/* PROG BAR */
+.prog-wrap{padding:6px 14px 10px;background:var(--surface2);}
+.prog-lbl{font-size:10px;color:var(--muted);margin-bottom:4px;display:flex;justify-content:space-between;}
+.prog-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width .3s;}
+
+/* SUMMARY FOOTER */
+.sum-bar{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:7px 10px;display:flex;gap:5px;z-index:100;}
+.sum-card{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:5px 4px;text-align:center;}
+.sum-label{font-size:9px;color:var(--muted);}
+.sum-val{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;color:var(--accent);line-height:1.1;}
+.sum-tc{font-size:9px;color:var(--accent2);}
+.sum-card.total-card{border-color:var(--accent);background:rgba(247,147,26,.08);}
+.sum-card.total-card .sum-label{color:var(--accent);}
+.sum-card.total-card .sum-val{color:var(--accent2);font-size:15px;}
+
+/* MODALS */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:200;align-items:flex-end;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px 16px 0 0;width:100%;max-width:480px;padding:18px;max-height:88vh;overflow-y:auto;}
+.modal h3{font-family:'Rajdhani',sans-serif;font-size:18px;color:var(--accent2);margin-bottom:14px;text-align:center;}
+.modal-close{width:100%;padding:11px;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Noto Sans',sans-serif;margin-top:10px;}
+.day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:12px;}
+.day-opt{padding:9px 2px;border-radius:8px;border:1.5px solid var(--border);text-align:center;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);}
+.day-opt.active{background:var(--accent);border-color:var(--accent);color:#000;}
+.day-opt.today-opt{border-color:var(--accent2);color:var(--accent2);}
+
+/* HIST */
+.hist-week{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;}
+.hist-wk-title{font-family:'Rajdhani',sans-serif;font-size:15px;color:var(--accent2);margin-bottom:8px;}
+.hist-app-divider{display:flex;align-items:center;gap:8px;margin:14px 0 8px;}
+.hist-app-divider-line{flex:1;height:1px;background:var(--border);}
+.hist-app-divider-label{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:.5px;white-space:nowrap;padding:2px 10px;border-radius:20px;}
+.hist-row{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;border-bottom:1px solid var(--border);}
+.hist-row:last-child{border-bottom:none;}
+.hist-tc{color:var(--accent);font-weight:700;font-family:'Rajdhani',sans-serif;}
+
+/* HISTÓRICO CARROSSEL */
+.hist-modal-carr{display:flex;flex-direction:column;padding:16px 16px 0;height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;overflow:hidden;border-radius:0;}
+.hist-carr-track{flex:1;overflow:hidden;position:relative;min-height:0;}
+.hist-modal-carr .modal-close{flex:none;margin:8px 0 10px;}
+.hist-carr-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex:none;}
+.hist-carr-nav{display:flex;align-items:center;gap:8px;}
+.hist-nav-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);font-size:20px;font-weight:700;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Rajdhani',sans-serif;line-height:1;}
+.hist-nav-btn:active{background:var(--border);}
+.hist-carr-track{flex:1;overflow:hidden;position:relative;min-height:0;}
+.hist-slide{position:absolute;inset:0;overflow-y:auto;transition:transform .25s ease,opacity .2s ease;padding-right:4px;}
+.hist-slide.active{transform:translateX(0);opacity:1;}
+.hist-slide.prev{transform:translateX(-110%);opacity:0;pointer-events:none;}
+.hist-slide.next{transform:translateX(110%);opacity:0;pointer-events:none;}
+
+/* FINALIZAR */
+.fin-desc{font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.7;}
+.fin-btn2{width:100%;padding:13px;background:var(--accent);border:none;color:#000;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:.5px;}
+
+/* NOTIF */
+.notif-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:500;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#000;padding:14px 20px;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;text-align:center;box-shadow:0 4px 20px rgba(247,147,26,.4);cursor:pointer;}
+.notif-banner.show{display:block;animation:slideDown .4s ease;}
+@keyframes slideDown{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+
+/* TOAST */
+.toast{position:fixed;bottom:104px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--green);color:#fff;padding:7px 16px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:all .22s;pointer-events:none;z-index:400;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.red{background:var(--red);}
+
+/* TCMC color */
+.tcmc{color:var(--tcmc);}
+
+/* BACKUP */
+.backup-section{width:100%;max-width:340px;border-top:1px solid var(--border);padding-top:16px;display:flex;flex-direction:column;gap:10px;}
+.backup-title{font-size:11px;color:var(--muted);text-align:center;letter-spacing:.5px;text-transform:uppercase;}
+.backup-btns{display:flex;gap:10px;}
+.bkp-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 10px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-family:'Noto Sans',sans-serif;transition:border-color .15s;}
+.bkp-btn:active{background:var(--surface2);}
+.bkp-btn.export{border-color:rgba(63,185,80,.3);}
+.bkp-btn.export:active{border-color:var(--green);}
+.bkp-btn.import{border-color:rgba(88,166,255,.3);}
+.bkp-btn.import:active{border-color:var(--blue);}
+.bkp-icon{font-size:22px;line-height:1;}
+.bkp-label{font-size:12px;font-weight:600;}
+.bkp-label span{display:block;font-size:10px;font-weight:400;color:var(--muted);margin-top:1px;}
+.export .bkp-label{color:var(--green);}
+.import .bkp-label{color:var(--blue);}
+#importFileInput{display:none;}
+
+/* WALLET SCREEN */
+#walletScreen{position:fixed;inset:0;display:none;padding-bottom:20px;background:var(--bg);overflow-y:auto;z-index:1;}
+.eco-card.wallet{border-color:rgba(56,189,248,.3);}
+.eco-card.wallet:active{border-color:var(--tcmc);}
+.wallet .eco-name{color:var(--tcmc);}
+.wlt-header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;}
+.wlt-header-left{display:flex;align-items:center;gap:8px;}
+.wlt-title{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--tcmc);}
+.wlt-content{padding:12px 14px;}
+.wlt-cards{display:flex;gap:10px;margin-bottom:14px;}
+.wlt-card{flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:14px 12px;}
+.wlt-card-name{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.wlt-card-bal{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--tcmc);margin:4px 0 2px;}
+.wlt-card-token{font-size:10px;color:var(--muted);}
+.wlt-add-btn{width:100%;padding:13px;background:var(--surface);border:1.5px solid var(--tcmc);color:var(--tcmc);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:'Noto Sans',sans-serif;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:8px;}
+.wlt-add-btn:active{background:var(--surface2);}
+.extrato-title{font-family:'Rajdhani',sans-serif;font-size:14px;color:var(--accent2);margin-bottom:8px;}
+.empty-extrato{text-align:center;color:var(--muted);font-size:13px;padding:30px 0;}
+
+/* FILTROS DO EXTRATO */
+.ext-filters{display:flex;gap:5px;overflow-x:auto;scrollbar-width:none;margin-bottom:10px;}
+.ext-filters::-webkit-scrollbar{display:none;}
+.ext-filter-btn{flex:none;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-family:'Noto Sans',sans-serif;white-space:nowrap;}
+.ext-filter-btn.active{background:var(--tcmc);border-color:var(--tcmc);color:#000;}
+.ext-filter-btn[data-ef="pendente"].active{background:var(--accent2);border-color:var(--accent2);color:#000;}
+
+/* MOV-ROW melhorado */
+.mov-row{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;}
+.mov-row-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px;}
+.mov-rota{flex:1;min-width:0;}
+.mov-rota-linha{font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mov-rota-seta{font-size:10px;color:var(--muted);margin:1px 0;}
+.mov-val-wrap{text-align:right;flex:none;}
+.mov-val{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;}
+.mov-val.entrada{color:var(--green);}
+.mov-val.saida{color:var(--red);}
+.mov-val.transfer{color:var(--accent2);}
+.mov-datas{font-size:9px;color:var(--muted);line-height:1.8;margin-bottom:4px;}
+.mov-datas span{display:block;}
+.mov-datas span strong{color:var(--text);}
+.mov-actions{display:flex;gap:8px;margin-top:5px;justify-content:flex-end;}
+.mov-edit-btn{font-size:10px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:'Noto Sans',sans-serif;padding:2px 4px;}
+.mov-del-btn{font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;font-family:'Noto Sans',sans-serif;padding:2px 4px;}
+.mov-form-label{font-size:11px;color:var(--muted);margin-bottom:5px;display:block;}
+.mov-form-select,.mov-form-input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:11px;padding:7px 10px;border-radius:8px;font-family:'Noto Sans',sans-serif;}
+.mov-form-select:focus,.mov-form-input:focus{outline:none;border-color:var(--tcmc);}
+.mov-form-select option{background:var(--bg);font-size:11px;}
+.mov-form-select optgroup{font-size:10px;color:var(--accent2);font-style:normal;font-weight:700;}
+
+/* CUSTOM SELECT para origem/destino com endereço em 2 linhas */
+.csel-wrap{position:relative;width:100%;}
+.csel-trigger{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:11px;padding:7px 32px 7px 10px;border-radius:8px;cursor:pointer;text-align:left;font-family:'Noto Sans',sans-serif;position:relative;min-height:36px;}
+.csel-trigger::after{content:'▾';position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:12px;}
+.csel-trigger.open{border-color:var(--tcmc);}
+.csel-trigger .csel-addr{font-size:9px;color:var(--muted);display:block;margin-top:1px;word-break:break-all;}
+.csel-dropdown{display:none;position:fixed;background:var(--surface);border:1px solid var(--border);border-radius:8px;z-index:500;max-height:60vh;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.5);}
+.csel-dropdown.open{display:block;}
+.csel-group-label{font-size:10px;font-weight:700;color:var(--accent2);padding:8px 12px 3px;text-transform:uppercase;letter-spacing:.5px;background:var(--surface2);}
+.csel-option{padding:7px 12px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s;}
+.csel-option:last-child{border-bottom:none;}
+.csel-option:active,.csel-option.selected{background:rgba(56,189,248,.1);}
+.csel-option .csel-opt-name{font-size:11px;color:var(--text);}
+.csel-option .csel-opt-addr{font-size:9px;color:var(--muted);word-break:break-all;margin-top:2px;}
+.csel-option.selected .csel-opt-name{color:var(--tcmc);}
+.mov-confirm-btn{width:100%;padding:13px;background:var(--tcmc);border:none;color:#000;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:.5px;margin-top:4px;}
+.tipo-btns{display:flex;gap:6px;flex-wrap:wrap;}
+.tipo-btn{flex:1;min-width:80px;padding:8px 6px;border-radius:8px;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;font-family:'Noto Sans',sans-serif;text-align:center;transition:all .15s;}
+.tipo-btn.active{border-color:var(--tcmc);color:var(--tcmc);background:rgba(56,189,248,.1);}
+
+/* TIMELINE */
+.eco-card.timeline{border-color:rgba(163,113,247,.3);}
+.eco-card.timeline:active{border-color:var(--purple);}
+.timeline-eco .eco-name{color:var(--purple);}
+#timelineScreen{position:fixed;inset:0;display:none;padding-bottom:20px;background:var(--bg);overflow-y:auto;z-index:1;}
+.tl-header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;position:sticky;top:0;z-index:100;}
+.tl-header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.tl-title{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:var(--purple);}
+.tl-add-btn{background:var(--purple);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;padding:7px 14px;cursor:pointer;font-family:'Noto Sans',sans-serif;}
+.tl-filters{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
+.tl-filters::-webkit-scrollbar{display:none;}
+.tl-filter-btn{flex:none;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-family:'Noto Sans',sans-serif;white-space:nowrap;}
+.tl-filter-btn.active{background:var(--purple);border-color:var(--purple);color:#fff;}
+.tl-search{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:13px;padding:8px 12px;border-radius:8px;font-family:'Noto Sans',sans-serif;margin-bottom:10px;}
+.tl-search:focus{outline:none;border-color:var(--purple);}
+.tl-content{padding:12px 14px;}
+.tl-empty{text-align:center;color:var(--muted);font-size:13px;padding:40px 0;}
+
+/* TIMELINE ITEMS */
+.tl-list{position:relative;padding-left:28px;}
+.tl-list::before{content:'';position:absolute;left:10px;top:0;bottom:0;width:2px;background:var(--border);}
+.tl-item{position:relative;margin-bottom:16px;}
+.tl-item::before{content:'';position:absolute;left:-22px;top:14px;width:10px;height:10px;border-radius:50%;border:2px solid var(--border);background:var(--bg);}
+.tl-item.tipo-conquista::before{background:#fbbf24;border-color:#fbbf24;}
+.tl-item.tipo-saque::before{background:var(--green);border-color:var(--green);}
+.tl-item.tipo-migracao::before{background:var(--blue);border-color:var(--blue);}
+.tl-item.tipo-investimento::before{background:var(--accent);border-color:var(--accent);}
+.tl-item.tipo-farming::before{background:#34d399;border-color:#34d399;}
+.tl-item.tipo-cacaovos::before{background:#f472b6;border-color:#f472b6;}
+.tl-item.tipo-wallet::before{background:var(--tcmc);border-color:var(--tcmc);}
+.tl-item.tipo-sistema::before{background:var(--muted);border-color:var(--muted);}
+.tl-item.tipo-outro::before{background:var(--purple);border-color:var(--purple);}
+.tl-item.tipo-conta::before{background:var(--accent2);border-color:var(--accent2);}
+.tl-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;}
+.tl-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px;}
+.tl-badge{font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;flex:none;}
+.badge-conquista{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3);}
+.badge-saque{background:rgba(63,185,80,.15);color:var(--green);border:1px solid rgba(63,185,80,.3);}
+.badge-migracao{background:rgba(88,166,255,.15);color:var(--blue);border:1px solid rgba(88,166,255,.3);}
+.badge-investimento{background:rgba(247,147,26,.15);color:var(--accent);border:1px solid rgba(247,147,26,.3);}
+.badge-farming{background:rgba(52,211,153,.15);color:#34d399;border:1px solid rgba(52,211,153,.3);}
+.badge-cacaovos{background:rgba(244,114,182,.15);color:#f472b6;border:1px solid rgba(244,114,182,.3);}
+.badge-wallet{background:rgba(56,189,248,.15);color:var(--tcmc);border:1px solid rgba(56,189,248,.3);}
+.badge-sistema{background:rgba(125,133,144,.15);color:var(--muted);border:1px solid rgba(125,133,144,.3);}
+.badge-outro{background:rgba(163,113,247,.15);color:var(--purple);border:1px solid rgba(163,113,247,.3);}
+.badge-conta{background:rgba(232,196,74,.15);color:var(--accent2);border:1px solid rgba(232,196,74,.3);}
+.badge-mov-entrada{background:rgba(63,185,80,.15);color:var(--green);border:1px solid rgba(63,185,80,.3);}
+.badge-mov-saida{background:rgba(248,81,73,.15);color:var(--red);border:1px solid rgba(248,81,73,.3);}
+.badge-mov-transfer{background:rgba(232,196,74,.15);color:var(--accent2);border:1px solid rgba(232,196,74,.3);}
+.tl-item.tipo-mov-entrada::before{background:var(--green);border-color:var(--green);}
+.tl-item.tipo-mov-saida::before{background:var(--red);border-color:var(--red);}
+.tl-item.tipo-mov-transfer::before{background:var(--accent2);border-color:var(--accent2);}
+.tl-titulo{font-size:13px;font-weight:700;color:var(--text);flex:1;}
+.tl-data{font-size:10px;color:var(--muted);margin-bottom:4px;}
+.tl-desc{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:4px;}
+.tl-meta{display:flex;gap:10px;flex-wrap:wrap;}
+.tl-meta-item{font-size:10px;color:var(--muted);}
+.tl-meta-item strong{color:var(--accent2);}
+.tl-actions{display:flex;gap:8px;margin-top:6px;justify-content:flex-end;}
+.tl-edit-btn{font-size:10px;color:var(--blue);background:none;border:none;cursor:pointer;font-family:'Noto Sans',sans-serif;}
+.tl-del-btn{font-size:10px;color:var(--red);background:none;border:none;cursor:pointer;font-family:'Noto Sans',sans-serif;}
+
+/* MODAL EVENTO */
+.ev-form-group{margin-bottom:12px;}
+.ev-label{font-size:11px;color:var(--muted);margin-bottom:5px;display:block;}
+.ev-input,.ev-select,.ev-textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:13px;padding:9px 12px;border-radius:8px;font-family:'Noto Sans',sans-serif;}
+.ev-input:focus,.ev-select:focus,.ev-textarea:focus{outline:none;border-color:var(--purple);}
+.ev-select option{background:var(--bg);}
+.ev-textarea{resize:vertical;min-height:70px;font-size:12px;}
+.ev-confirm-btn{width:100%;padding:13px;background:var(--purple);border:none;color:#fff;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;letter-spacing:.5px;margin-top:4px;}
+
+/* CONTAS SECTION */
+.contas-section{margin-top:16px;border-top:1px solid var(--border);padding-top:12px;}
+.contas-title{font-family:'Rajdhani',sans-serif;font-size:14px;color:var(--accent2);margin-bottom:10px;}
+.conta-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;}
+.conta-card-name{font-size:12px;font-weight:700;color:var(--text);}
+.conta-card-app{font-size:10px;color:var(--muted);margin-bottom:4px;}
+.conta-card-data{font-size:10px;color:var(--accent2);}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="homeScreen" style="display:flex">
+  <div>
+    <div class="home-logo">CRYPTO<span>CTRL</span></div>
+    <div class="home-sub">Selecione o ecossistema</div>
+  </div>
+  <div class="eco-cards">
+    <div class="eco-card ttcoin" onclick="openEco('ttcoin')">
+      <div class="eco-icon">
+        <!-- TC Token Logo -->
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="24" cy="24" r="24" fill="#F7931A"/>
+          <circle cx="24" cy="24" r="20" fill="#E8820A"/>
+          <!-- T -->
+          <rect x="10" y="13" width="13" height="3.5" rx="1.5" fill="white"/>
+          <rect x="14.75" y="13" width="3.5" height="18" rx="1.5" fill="white"/>
+          <!-- C -->
+          <path d="M27 22.5C27 19.46 29.24 17 32 17C33.5 17 34.85 17.7 35.8 18.8L33.8 20.5C33.3 19.9 32.7 19.5 32 19.5C30.62 19.5 29.5 20.85 29.5 22.5C29.5 24.15 30.62 25.5 32 25.5C32.7 25.5 33.3 25.1 33.8 24.5L35.8 26.2C34.85 27.3 33.5 28 32 28C29.24 28 27 25.54 27 22.5Z" fill="white"/>
+          <!-- "TC" text bottom -->
+          <text x="24" y="38" text-anchor="middle" font-family="Arial Black,sans-serif" font-size="7" font-weight="900" fill="white" letter-spacing="1">TC</text>
+        </svg>
+      </div>
+      <div><div class="eco-name">TTCoin Network</div><div class="eco-desc">Network · Trees · Farming · Ecosystem</div></div>
+    </div>
+    <div class="eco-card jumptask" onclick="openEco('jumptask')">
+      <div class="eco-icon">
+        <!-- JMPT Token Logo -->
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="24" cy="24" r="24" fill="#6C3AE8"/>
+          <circle cx="24" cy="24" r="20" fill="#5A2ED4"/>
+          <!-- Lightning bolt / J shape -->
+          <path d="M28 10L18 26h8l-4 12 14-18h-9l3-10z" fill="white" opacity="0.95"/>
+          <!-- JMPT text -->
+          <text x="24" y="45" text-anchor="middle" font-family="Arial Black,sans-serif" font-size="5.5" font-weight="900" fill="white" letter-spacing="0.5">JMPT</text>
+        </svg>
+      </div>
+      <div><div class="eco-name">JumpTask</div><div class="eco-desc">Coletas diárias por conta</div></div>
+    </div>
+  </div>
+
+  <!-- BACKUP -->
+  <div class="backup-section">
+    <div class="backup-title">💾 Backup dos dados</div>
+    <div class="backup-btns">
+      <div class="bkp-btn export" onclick="exportBackup()">
+        <div class="bkp-icon">📤</div>
+        <div class="bkp-label">Exportar<span>Salvar arquivo</span></div>
+      </div>
+      <div class="bkp-btn import" onclick="document.getElementById('importFileInput').click()">
+        <div class="bkp-icon">📥</div>
+        <div class="bkp-label">Importar<span>Restaurar backup</span></div>
+      </div>
+    </div>
+  </div>
+  <input type="file" id="importFileInput" accept=".json" onchange="importBackup(this)">
+
+</div>
+
+  <input type="file" id="importFileInput" accept=".json" onchange="importBackup(this)">
+
+  <!-- DEBUG -->
+  <div style="margin-top:4px;">
+    <button onclick="openDebug()" style="background:var(--surface);border:1.5px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;padding:8px 20px;border-radius:20px;cursor:pointer;font-family:'Noto Sans',sans-serif;margin:0 auto;display:block;">🔧 Diagnóstico</button>
+  </div>
+
+</div>
+
+<!-- MODAL DEBUG -->
+<div class="modal-bg" id="debugModal">
+  <div class="modal">
+    <h3 style="color:var(--muted);font-size:15px;">🔧 Diagnóstico</h3>
+    <div id="debugContent" style="font-size:11px;font-family:monospace;line-height:2;color:var(--text);word-break:break-all;"></div>
+    <button onclick="forcarAutoVermelho()" style="width:100%;padding:10px;background:var(--red);border:none;color:#fff;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Rajdhani',sans-serif;margin-top:10px;">⚡ FORÇAR AUTO-VERMELHO AGORA</button>
+    <button onclick="limparFlagAutoVermelho()" style="width:100%;padding:10px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans',sans-serif;margin-top:6px;">🗑️ Limpar flag (forçar amanhã)</button>
+    <button class="modal-close" onclick="closeModal('debugModal')">Fechar</button>
+  </div>
+</div>
+
+<!-- TIMELINE SCREEN -->
+<div id="timelineScreen">
+  <div class="tl-header">
+    <div class="tl-header-top">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="logo-back" onclick="voltarTTCoin()" style="font-size:32px;padding:0 4px;">‹</span>
+        <span class="tl-title">📅 LINHA DO TEMPO</span>
+      </div>
+      <button class="tl-add-btn" onclick="openEvModal()">＋ Evento</button>
+    </div>
+    <input class="tl-search" id="tlSearch" placeholder="🔍 Buscar eventos..." oninput="renderTimeline()">
+    <div class="tl-filters" id="tlFilters"></div>
+  </div>
+  <div class="tl-content">
+    <div id="tlList"></div>
+  </div>
+</div>
+
+<!-- MODAL MINHAS CONTAS -->
+<div class="modal-bg" id="contasModal">
+  <div class="modal">
+    <h3>👤 Minhas Contas</h3>
+    <div id="contasList"></div>
+    <button class="modal-close" onclick="closeModal('contasModal')">Fechar</button>
+  </div>
+</div>
+
+<!-- MODAL EVENTO -->
+<div class="modal-bg" id="evModal">
+  <div class="modal">
+    <h3 id="evModalTitle">＋ Novo Evento</h3>
+    <div class="ev-form-group">
+      <label class="ev-label">Data</label>
+      <input class="ev-input" type="date" id="evData">
+    </div>
+    <div class="ev-form-group">
+      <label class="ev-label">Tipo</label>
+      <select class="ev-select" id="evTipo">
+        <option value="conquista">🏆 Conquista</option>
+        <option value="saque">💸 Saque</option>
+        <option value="migracao">🔄 Migração</option>
+        <option value="investimento">💰 Investimento</option>
+        <option value="wallet">👛 Wallet</option>
+        <option value="conta">👤 Conta</option>
+        <option value="outro">📌 Outro</option>
+      </select>
+    </div>
+    <div class="ev-form-group">
+      <label class="ev-label">Título</label>
+      <input class="ev-input" type="text" id="evTitulo" placeholder="Ex: Ganso 365 dias">
+    </div>
+    <div class="ev-form-group">
+      <label class="ev-label">Descrição / Observação</label>
+      <textarea class="ev-textarea" id="evDesc" placeholder="Descreva o evento..."></textarea>
+    </div>
+    <div class="ev-form-group">
+      <label class="ev-label">Conta relacionada (opcional)</label>
+      <select class="ev-select" id="evConta">
+        <option value="">— Nenhuma —</option>
+      </select>
+    </div>
+    <div class="ev-form-group">
+      <label class="ev-label">Valor relacionado (opcional)</label>
+      <input class="ev-input" type="text" inputmode="decimal" id="evValor" placeholder="0,00 TC">
+    </div>
+    <button class="ev-confirm-btn" onclick="confirmarEvento()">✓ SALVAR EVENTO</button>
+    <button class="modal-close" onclick="closeModal('evModal')">Cancelar</button>
+  </div>
+</div>
+
+<!-- WALLET SCREEN -->
+<div id="walletScreen">
+  <div class="wlt-header">
+    <div class="wlt-header-left">
+      <span class="logo-back" onclick="voltarTTCoin()" style="font-size:32px;padding:0 4px;cursor:pointer;color:var(--muted);">‹</span>
+      <span class="wlt-title">👛 CARTEIRAS TC</span>
+    </div>
+  </div>
+  <div class="wlt-content">
+    <div class="wlt-cards" id="wltCards"></div>
+    <button class="wlt-add-btn" onclick="openMovModal()">＋ Registrar Movimentação</button>
+    <div class="extrato-title">📄 Extrato de Movimentações</div>
+    <div class="ext-filters">
+      <button class="ext-filter-btn active" data-ef="todos"    onclick="setExtFiltro(this)">Todos</button>
+      <button class="ext-filter-btn"        data-ef="saida"    onclick="setExtFiltro(this)">💸 Saques</button>
+      <button class="ext-filter-btn"        data-ef="entrada"  onclick="setExtFiltro(this)">💰 Entradas</button>
+      <button class="ext-filter-btn"        data-ef="transfer" onclick="setExtFiltro(this)">🔄 Transferências</button>
+      <button class="ext-filter-btn"        data-ef="pendente" onclick="setExtFiltro(this)" style="border-color:rgba(232,196,74,.4);color:var(--accent2);">⏳ Pendentes</button>
+    </div>
+    <div id="extratoList"></div>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div id="appScreen">
+  <div class="header">
+    <div class="header-top">
+      <div class="logo">
+        <span class="logo-back" onclick="goHome()" style="font-size:32px;padding:0 4px;">‹</span>
+        <span id="logoLabel" class="logo-ttcoin">TT<span>COIN</span></span>
+        <span id="weekLabelTop" style="font-size:11px;color:var(--muted);font-family:'Noto Sans',sans-serif;font-weight:400;margin-left:4px;">—</span>
+      </div>
+      <div class="hdr-right">
+        <span id="syncIndicator" title="Sincronizando..." style="font-size:14px;cursor:default;opacity:.7;">☁️</span>
+        <button class="icon-btn" id="btnTimeline" style="display:none" onclick="openTimeline()">📅</button>
+        <button class="icon-btn" id="btnContas"   style="display:none" onclick="openContasModal()">👤</button>
+        <button class="icon-btn" id="btnWallet"   style="display:none" onclick="openWallets()">👛</button>
+        <button class="icon-btn" onclick="abrirHistorico()">📋</button>
+        <div class="day-badge" id="dayBadge" onclick="openDayModal()">DOM</div>
+      </div>
+    </div>
+    <div class="tabs" id="tabsBar"></div>
+  </div>
+
+  <!-- BANNER FINALIZAR SEMANA -->
+  <div class="fin-banner" id="finBanner" onclick="openFinalizar()">
+    <div class="fin-banner-title">⚑ Hora de Finalizar a Semana!</div>
+    <div class="fin-banner-sub">Finalize antes de começar as coletas de hoje. Toque aqui para finalizar.</div>
+  </div>
+
+  <!-- DAY BAR global -->
+  <div class="day-bar" id="globalDayBar">
+    <button class="daybtn" data-d="0" onclick="selectDayBar(0)">Dom<span class="dprog" id="dp0"></span></button>
+    <button class="daybtn" data-d="1" onclick="selectDayBar(1)">Seg<span class="dprog" id="dp1"></span></button>
+    <button class="daybtn" data-d="2" onclick="selectDayBar(2)">Ter<span class="dprog" id="dp2"></span></button>
+    <button class="daybtn" data-d="3" onclick="selectDayBar(3)">Qua<span class="dprog" id="dp3"></span></button>
+    <button class="daybtn" data-d="4" onclick="selectDayBar(4)">Qui<span class="dprog" id="dp4"></span></button>
+    <button class="daybtn" data-d="5" onclick="selectDayBar(5)">Sex<span class="dprog" id="dp5"></span></button>
+    <button class="daybtn" data-d="6" onclick="selectDayBar(6)">Sáb<span class="dprog" id="dp6"></span></button>
+  </div>
+
+  <div class="content" id="mainContent"></div>
+
+  <!-- SUMMARY FOOTER -->
+  <div class="sum-bar" id="summaryBar">
+    <div style="display:flex;gap:5px;width:100%;flex-wrap:wrap;">
+      <div class="sum-card">
+        <div class="sum-label">Network</div>
+        <div class="sum-val" id="sum-net">0/0</div>
+        <div class="sum-tc" id="sum-net-tc">+0 TC</div>
+      </div>
+      <div class="sum-card">
+        <div class="sum-label">Trees</div>
+        <div class="sum-val" id="sum-tree">0/0</div>
+        <div class="sum-tc" id="sum-tree-tc">+0 TC</div>
+      </div>
+      <div class="sum-card">
+        <div class="sum-label">Farming</div>
+        <div class="sum-val" id="sum-farm">0/0</div>
+        <div class="sum-tc" id="sum-farm-tc">+0 TC</div>
+      </div>
+      <div class="sum-card total-card">
+        <div class="sum-label">HOJE</div>
+        <div class="sum-val" id="sum-total">0</div>
+        <div class="sum-tc">TC dia</div>
+      </div>
+      <div class="sum-card total-card" style="border-color:var(--accent2);">
+        <div class="sum-label" style="color:var(--accent2);">SEMANA</div>
+        <div class="sum-val" id="sum-semana" style="color:var(--accent2);">0</div>
+        <div class="sum-tc">TC semana</div>
+      </div>
+    </div>
+    <button class="fin-btn" onclick="openFinalizar()" style="width:100%;margin-top:6px;padding:8px;border-radius:8px;text-align:center;">⚑ Finalizar Semana</button>
+  </div>
+
+  <!-- RODAPÉ JUMPTASK -->
+  <div class="sum-bar" id="jtBar" style="display:none;">
+    <div style="display:flex;gap:5px;width:100%;flex-wrap:wrap;">
+      <div class="sum-card" style="border-color:var(--purple);">
+        <div class="sum-label" style="color:var(--purple);">Hoje</div>
+        <div class="sum-val" id="jt-sum-dia" style="color:var(--purple);">0/5</div>
+        <div class="sum-tc" id="jt-sum-dia-val">0 JMPT</div>
+      </div>
+      <div class="sum-card total-card" style="border-color:var(--purple);">
+        <div class="sum-label" style="color:var(--purple);">SEMANA</div>
+        <div class="sum-val" id="jt-sum-semana" style="color:var(--purple);">0.000</div>
+        <div class="sum-tc">JMPT</div>
+      </div>
+    </div>
+    <button class="fin-btn" onclick="openFinalizar()" style="width:100%;margin-top:6px;padding:8px;border-radius:8px;text-align:center;border-color:var(--purple);color:var(--purple);">⚑ Finalizar Semana</button>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="dayModal">
+  <div class="modal">
+    <h3>Selecionar Dia</h3>
+    <div class="day-grid" id="dayGrid"></div>
+    <button class="modal-close" onclick="closeModal('dayModal')">Fechar</button>
+  </div>
+</div>
+<div class="modal-bg" id="histModal" style="align-items:flex-start;">
+  <div class="modal hist-modal-carr">
+    <div class="hist-carr-header">
+      <h3 style="margin:0;font-size:16px;">📋 Histórico</h3>
+      <div class="hist-carr-nav">
+        <button class="hist-nav-btn" onclick="histNavPrev()">‹</button>
+        <span id="histNavLabel" style="font-size:11px;color:var(--muted);min-width:60px;text-align:center;"></span>
+        <button class="hist-nav-btn" onclick="histNavNext()">›</button>
+      </div>
+    </div>
+    <div class="hist-carr-track" id="histCarrTrack"></div>
+    <button class="modal-close" onclick="closeModal('histModal')">Fechar</button>
+  </div>
+</div>
+<div class="modal-bg" id="finModal">
+  <div class="modal">
+    <h3>⚑ Finalizar Semana</h3>
+    <div class="fin-desc" id="fin-desc"></div>
+    <button class="fin-btn2" onclick="confirmarFinalizar()">CONFIRMAR E INICIAR NOVA SEMANA</button>
+    <button class="modal-close" onclick="closeModal('finModal')">Cancelar</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="saqueModal">
+  <div class="modal">
+    <h3>💸 Registrar Saque</h3>
+    <div class="saque-modal-acc" id="saque-acc-label"></div>
+    <div class="saque-modal-sub" id="saque-acc-sub"></div>
+    <div class="mov-form-group">
+      <label class="mov-form-label">Data e Hora da Solicitação:</label>
+      <div style="display:flex;gap:6px;">
+        <input class="mov-form-input" type="date" id="saqueDataSolic" style="flex:1">
+        <input class="mov-form-input" type="time" id="saqueHoraSolic" style="width:100px">
+      </div>
+    </div>
+    <div class="mov-form-group">
+      <label class="mov-form-label">Destino do saque:</label>
+      <select class="mov-form-select" id="saqueDestino">
+        <option value="">— Selecione —</option>
+        <option value="Wallet Principal">Wallet Principal (0xD37A...)</option>
+        <option value="Wallet Operacional">Wallet Operacional (0x300b...)</option>
+        <option value="app">Outro app (app→app)</option>
+      </select>
+    </div>
+    <div class="mov-form-group" id="saqueDestinoAppWrap" style="display:none">
+      <label class="mov-form-label">Qual app destino?</label>
+      <select class="mov-form-select" id="saqueDestinoApp">
+        <option value="Network">TTCoin Network</option>
+        <option value="Trees">TTCoin Trees</option>
+        <option value="Farming">Farming TC</option>
+        <option value="Ecosystem">Ecosystem</option>
+      </select>
+    </div>
+    <div class="mov-form-group">
+      <label class="mov-form-label">Endereço da Wallet destino (opcional):</label>
+      <input class="mov-form-input" type="text" id="saqueEnderecoWallet" placeholder="0x...">
+    </div>
+    <div class="mov-form-group">
+      <label class="mov-form-label">Hash da transação (opcional):</label>
+      <input class="mov-form-input" type="text" id="saqueHash" placeholder="0x...">
+    </div>
+    <div class="mov-form-group">
+      <label class="mov-form-label">Status:</label>
+      <div class="tipo-btns">
+        <button class="tipo-btn active" data-sq-status="solicitado" onclick="selectSqStatus(this)">⏳ Solicitado</button>
+        <button class="tipo-btn" data-sq-status="concluido" onclick="selectSqStatus(this)">✓ Concluído</button>
+      </div>
+    </div>
+    <div class="mov-form-group" id="saqueDataConclusaoWrap" style="display:none">
+      <label class="mov-form-label">Data e Hora de Conclusão:</label>
+      <div style="display:flex;gap:6px;">
+        <input class="mov-form-input" type="date" id="saqueDataConclusao" style="flex:1">
+        <input class="mov-form-input" type="time" id="saqueHoraConclusao" style="width:100px">
+      </div>
+    </div>
+    <div class="mov-form-group">
+      <label class="mov-form-label">Valor sacado (TC):</label>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:5px;">⚠️ Use o valor real exibido no app, que pode diferir do calculado pelo sistema.</div>
+      <input class="saque-modal-input" type="text" inputmode="decimal" placeholder="0,00" id="saqueNovoSaldo">
+    </div>
+    <div class="mov-form-group">
+      <label class="mov-form-label">Observação (opcional):</label>
+      <input class="mov-form-input" type="text" id="saqueObs" placeholder="Ex: Saque mensal Farming">
+    </div>
+    <button class="saque-confirm-btn" onclick="confirmarSaque()">✓ CONFIRMAR SAQUE</button>
+    <button class="modal-close" onclick="closeModal('saqueModal')">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL MOVIMENTAÇÃO MANUAL -->
+<div class="modal-bg" id="movModal">
+  <div class="modal">
+    <h3 id="movModalTitle">＋ Nova Movimentação</h3>
+    <div class="mov-form-group">
+      <label class="mov-form-label">Origem:</label>
+      <div class="csel-wrap" id="cselOrigemWrap">
+        <button type="button" class="csel-trigger" id="cselOrigemTrigger" onclick="toggleCsel('origem')">
+          <span id="cselOrigemLabel">— Selecione —</span>
+        </button>
+        <div class="csel-dropdown" id="cselOrigemDropdown"></div>
+      </div>
+      <input type="hidden" id="movOrigem">
+    </div>
+    <div class="mov-form-group">
+      <label class="mov-form-label">Destino:</label>
+      <div class="csel-wrap" id="cselDestinoWrap">
+        <button type="button" class="csel-trigger" id="cselDestinoTrigger" onclick="toggleCsel('destino')">
+          <span id="cselDestinoLabel">— Selecione —</span>
+        </button>
+        <div class="csel-dropdown" id="cselDestinoDropdown"></div>
+      </div>
+      <input type="hidden" id="movDestino">
+    </div>
+    <div class="mov-form-group">
+      <label class="mov-form-label">Valor (TC):</label>
+      <input class="mov-form-input" type="text" inputmode="decimal" placeholder="0,00" id="movValor">
+    </div>
+    <div class="mov-form-group">
+      <label class="mov-form-label">Data e Hora da Solicitação:</label>
+      <div style="display:flex;gap:6px;">
+        <input class="mov-form-input" type="date" id="movData" style="flex:1">
+        <input class="mov-form-input" type="time" id="movHora" style="width:100px">
+      </div>
+    </div>
+    <div class="mov-form-group">
+      <label class="mov-form-label">Status:</label>
+      <div class="tipo-btns">
+        <button class="tipo-btn active" data-status="solicitado" onclick="selectStatus(this)">⏳ Solicitado</button>
+        <button class="tipo-btn" data-status="concluido" onclick="selectStatus(this)">✓ Concluído</button>
+      </div>
+    </div>
+    <div id="movConclusaoWrap" style="display:none">
+      <div class="mov-form-group">
+        <label class="mov-form-label">Data e Hora da Conclusão:</label>
+        <div style="display:flex;gap:6px;">
+          <input class="mov-form-input" type="date" id="movDataConc" style="flex:1">
+          <input class="mov-form-input" type="time" id="movHoraConc" style="width:100px">
+        </div>
+      </div>
+      <div class="mov-form-group">
+        <label class="mov-form-label">Hash da transação (opcional):</label>
+        <input class="mov-form-input" type="text" id="movHash" placeholder="0x...">
+      </div>
+    </div>
+    <div class="mov-form-group">
+      <label class="mov-form-label">Observação (opcional):</label>
+      <input class="mov-form-input" type="text" placeholder="Ex: Saque mensal" id="movObs">
+    </div>
+    <button class="mov-confirm-btn" onclick="confirmarMovimentacao()">✓ SALVAR MOVIMENTAÇÃO</button>
+    <button class="modal-close" onclick="closeModal('movModal')">Cancelar</button>
+  </div>
+</div>
+  🌅 Bom dia! Novo dia iniciado — hora de começar as coletas!
+</div>
+<div class="modal-bg" id="concluirModal">
+  <div class="modal">
+    <h3>✅ Concluir Saque</h3>
+    <div class="mov-form-group">
+      <label class="mov-form-label">Data de Conclusão:</label>
+      <div style="display:flex;gap:6px;">
+        <input class="mov-form-input" type="date" id="concluirData" style="flex:1">
+        <input class="mov-form-input" type="time" id="concluirHora" style="width:100px">
+      </div>
+    </div>
+    <div class="mov-form-group">
+      <label class="mov-form-label">Hash da transação (opcional):</label>
+      <input class="mov-form-input" type="text" id="concluirHash" placeholder="0x...">
+    </div>
+    <button class="saque-confirm-btn" style="background:var(--green);" onclick="confirmarConclusao()">✓ CONFIRMAR CONCLUSÃO</button>
+    <button class="modal-close" onclick="closeModal('concluirModal')">Cancelar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════
+const DAY_NAMES = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const DAY_FULL  = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+const DAY_START = 6; // novo dia às 6h
+
+const NET_ACCOUNTS = [
+  {name:'Celular Meu',         email:'lanhouse.x1@gmail.com'},
+  {name:'Celular Brenda',      email:'recuperacao.srmouse@gmail.com'},
+  {name:'Tablet Brenda',       email:'josefm.2012@gmail.com'},
+  {name:'Note Nanda Google',   email:'nutrifernandageffer@gmail.com'},
+  {name:'Note Nanda LDPlayer', email:'brendageffer4@gmail.com'},
+  {name:'Note Meu LDPlayer',   email:'bibliohqs.05@gmail.com'},
+  {name:'Celular Mãe',         email:'isg.irani@gmail.com'},
+];
+const TREE_ACCOUNTS = [
+  {name:'Celular Meu',    email:'mouse.rsg@gmail.com'},
+  {name:'Celular Brenda', email:'recuperacao.srmouse@gmail.com'},
+  {name:'Tablet Brenda',  email:'brendageffer6@gmail.com'},
+  {name:'Celular Mãe',    email:'isg.irani@gmail.com'},
+];
+const FARM_ACCOUNTS = [
+  {name:'Celular Meu',       email:'lanhouse.x1@gmail.com',              dtreg:'10 Fev 2026'},
+  {name:'Celular Brenda',    email:'recuperacao.srmouse@gmail.com',       dtreg:'10 Fev 2026'},
+  {name:'Tablet Brenda',     email:'brendageffer@gmail.com',              dtreg:'11 Fev 2026'},
+  {name:'Note Nanda Google', email:'nutrifernandageffer@gmail.com',       dtreg:'23 Abr 2026'},
+  {name:'Celular Mãe',       email:'isg.irani@gmail.com',                 dtreg:'17 Fev 2026'},
+];
+const ECO_ACCOUNTS = [
+  {name:'Celular Meu',    email:'lanhouse.x1@gmail.com'},
+  {name:'Tablet Brenda',  email:'brendageffer6@gmail.com'},
+  {name:'Celular Mãe',    email:'isg.irani@gmail.com'},
+];
+const JT_ACCOUNTS = [
+  {name:'Celular Mãe',            email:'irani.isg@gmail.com',              wallet:''},
+  {name:'Tablet Brenda',          email:'brendageffer6@gmail.com',           wallet:''},
+  {name:'Celular Brenda',         email:'recuperacao.srmouse@gmail.com',     wallet:''},
+  {name:'Emul. Note (Crédito)',   email:'gefferluiza@gmail.com',             wallet:''},
+  {name:'Emul. Note (Principal)', email:'brendageffer4@gmail.com',           wallet:''},
+];
+
+const FARM_SLOTS = [10,10,10,10,10,10,10];
+const TC_NET=30, TC_TREE=25, TC_RACAO=2, TCMC_ECO=1000;
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let state={}, currentEco='ttcoin', currentTab='network';
+let currentDay=0, currentWeekId='', lastNotifDate='';
+
+function appDay(date){
+  const d=date||new Date();
+  if(d.getHours()<DAY_START){const p=new Date(d);p.setDate(p.getDate()-1);return p.getDay();}
+  return d.getDay();
+}
+function weekId(date){
+  const d=new Date(date||new Date());
+  if(d.getHours()<DAY_START) d.setDate(d.getDate()-1);
+  d.setHours(0,0,0,0); d.setDate(d.getDate()-d.getDay());
+  // usar data local, não UTC (toISOString retorna UTC e pode errar no fuso BR)
+  const ano = d.getFullYear();
+  const mes = String(d.getMonth()+1).padStart(2,'0');
+  const dia = String(d.getDate()).padStart(2,'0');
+  return `${ano}-${mes}-${dia}`;
+}
+// Data local no formato YYYY-MM-DD (nunca usar toISOString para datas locais)
+function localDateStr(date){
+  const d = date || new Date();
+  const ano = d.getFullYear();
+  const mes = String(d.getMonth()+1).padStart(2,'0');
+  const dia = String(d.getDate()).padStart(2,'0');
+  return `${ano}-${mes}-${dia}`;
+}
+
+// ══════════════════════════════════════════
+// CHAVES DO LOCALSTORAGE / FIREBASE
+// ══════════════════════════════════════════
+const LS_STATE   = 'cc_v5';
+const LS_HIST    = 'cc_hist';
+const LS_HIST_JT = 'cc_hist_jt';
+
+function syncAfterHistChange(){
+  clearTimeout(_saveTimer);
+  _saveTimer=setTimeout(syncToCloud, 2000);
+}
+
+function getAllData(){
+  return {
+    state:   state,
+    hist:    JSON.parse(localStorage.getItem(LS_HIST)||'[]'),
+    hist_jt: JSON.parse(localStorage.getItem(LS_HIST_JT)||'[]'),
+    fin_date:localStorage.getItem('cc_fin_date')||'',
+    fin_wid: localStorage.getItem('cc_fin_weekid')||'',
+    notif:   localStorage.getItem('cc_notif')||'',
+    ts:      Date.now(),
+  };
+}
+
+function applyData(data, skipIfOlder){
+  if(!data) return;
+  // Se tiver timestamp e for mais antigo que o local, não aplica
+  if(skipIfOlder && data.ts && data.ts < (window._lastSaveTs||0)) return;
+  if(data.state)   { state=data.state; localStorage.setItem(LS_STATE, JSON.stringify(state)); }
+  if(data.hist)    localStorage.setItem(LS_HIST,    JSON.stringify(data.hist));
+  if(data.hist_jt) localStorage.setItem(LS_HIST_JT, JSON.stringify(data.hist_jt));
+  if(data.fin_date)localStorage.setItem('cc_fin_date',   data.fin_date);
+  if(data.fin_wid) localStorage.setItem('cc_fin_weekid', data.fin_wid);
+  if(data.notif)   localStorage.setItem('cc_notif',      data.notif);
+}
+
+function loadState(){
+  try{ state=JSON.parse(localStorage.getItem(LS_STATE)||'{}'); }catch(e){ state={}; }
+  lastNotifDate=localStorage.getItem('cc_notif')||'';
+}
+
+let _saveTimer=null;
+function saveState(){
+  // salva localmente imediato
+  localStorage.setItem(LS_STATE, JSON.stringify(state));
+  // salva na nuvem com debounce de 2s (evita muitas escritas)
+  clearTimeout(_saveTimer);
+  _saveTimer=setTimeout(syncToCloud, 2000);
+}
+
+async function syncToCloud(){
+  if(!window._fbSave) return;
+  window._lastSaveTs = Date.now();
+  const data = getAllData();
+  data.ts = window._lastSaveTs;
+  const ok = await window._fbSave(data);
+  const indicator = document.getElementById('syncIndicator');
+  if(indicator){
+    indicator.textContent = ok ? '☁️' : '⚠️';
+    indicator.title = ok ? 'Sincronizado' : 'Sem conexão — dados locais';
+    setTimeout(()=>{ if(indicator) indicator.textContent='☁️'; }, 3000);
+  }
+}
+
+async function loadFromCloud(){
+  if(!window._fbLoad) return false;
+  try{
+    const data = await window._fbLoad();
+    if(!data) return false;
+    const localTs = parseInt(localStorage.getItem('cc_ts')||'0');
+    // usar nuvem se for mais recente que o local
+    if(!localTs || (data.ts && data.ts > localTs)){
+      applyData(data, false);
+      localStorage.setItem('cc_ts', data.ts||Date.now());
+      return true;
+    }
+    return false;
+  }catch(e){ return false; }
+}
+
+function startCloudSync(){
+  if(!window._fbListen) return;
+  window._fbListen((data)=>{
+    // Só aplica se os dados da nuvem forem MAIS RECENTES que o último save local
+    const localTs = parseInt(localStorage.getItem('cc_ts')||'0');
+    if(data.ts && data.ts > localTs && data.ts > (window._lastSaveTs||0)){
+      applyData(data, true);
+      localStorage.setItem('cc_ts', data.ts);
+      if(document.getElementById('appScreen').style.display!=='none'){
+        renderTab(currentTab);
+        updateDayBar();
+      }
+      showToast('☁️ Sincronizado!', false);
+    }
+  });
+}
+function sk(sec,wid,day,acc,slot){return `${sec}|${wid}|${day}|${acc}|${slot}`;}
+function skSaldo(sec,wid,acc){return `saldo|${sec}|${wid}|${acc}`;}
+function skGanso(acc){return `ganso|${acc}`;}
+
+function getSaldo(sec,acc){return state[skSaldo(sec,currentWeekId,acc)]||'';}
+function getGanso(acc){return !!state[skGanso(acc)];}
+function setGanso(acc,v){state[skGanso(acc)]=v;saveState();}
+
+// ══════════════════════════════════════════
+// FORMAT
+// ══════════════════════════════════════════
+function fmtTC(v){
+  if(v===''||v===null||isNaN(v)) return '—';
+  return parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function parseSaldo(s){return parseFloat(String(s).replace(/\./g,'').replace(',','.'))||0;}
+
+// input: formatar enquanto digita (pt-BR)
+function onSaldoInput(el,sec,acc){
+  // store raw numeric string
+  const raw=el.value.replace(/[^\d,]/g,'');
+  state[skSaldo(sec,currentWeekId,acc)]=raw;
+  saveState();
+  updateAfterSaldo(sec);
+}
+function getSaldoNumeric(sec,acc){
+  const s=getSaldo(sec,acc);
+  if(!s) return 0;
+  return parseFloat(String(s).replace(/\./g,'').replace(',','.'))||0;
+}
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function openEco(eco){
+  window.scrollTo(0,0);
+  currentEco=eco;
+  document.getElementById('homeScreen').style.display='none';
+  document.getElementById('appScreen').style.display='block';
+  const ll=document.getElementById('logoLabel');
+  const sb=document.getElementById('summaryBar');
+  const gb=document.getElementById('globalDayBar');
+  const btnTL=document.getElementById('btnTimeline');
+  const btnC=document.getElementById('btnContas');
+  const btnW=document.getElementById('btnWallet');
+  const jtBar=document.getElementById('jtBar');
+  if(eco==='ttcoin'){
+    ll.className='logo-ttcoin';ll.innerHTML='TT<span>COIN</span>';
+    sb.style.display='flex';
+    if(jtBar) jtBar.style.display='none';
+    gb.style.display='flex';
+    if(btnTL) btnTL.style.display='inline-block';
+    if(btnC)  btnC.style.display='inline-block';
+    if(btnW)  btnW.style.display='inline-block';
+    buildTabs(['network','trees','farming','ecosystem'],['Network','Trees','Farming','Ecosystem']);
+    showTab('network');
+  } else {
+    ll.className='logo-jt';ll.textContent='JUMPTASK';
+    sb.style.display='none';
+    if(jtBar) jtBar.style.display='flex';
+    gb.style.display='flex';
+    if(btnTL) btnTL.style.display='none';
+    if(btnC)  btnC.style.display='none';
+    if(btnW)  btnW.style.display='none';
+    buildTabs(['jumptask'],['JumpTask']);
+    showTab('jumptask');
+  }
+  updateDayBar();
+}
+function voltarTTCoin(){
+  window.scrollTo(0,0);
+  document.getElementById('walletScreen').style.display='none';
+  document.getElementById('timelineScreen').style.display='none';
+  document.getElementById('homeScreen').style.display='none';
+  document.getElementById('appScreen').style.display='block';
+  // reativar estado do app
+  updateWeekLabel();
+  updateSemanaLabel();
+  checkFinSemana();
+  renderTab(currentTab);
+  updateDayBar();
+}
+
+function goHome(){
+  window.scrollTo(0,0);
+  document.getElementById('appScreen').style.display='none';
+  document.getElementById('walletScreen').style.display='none';
+  document.getElementById('timelineScreen').style.display='none';
+  document.getElementById('homeScreen').style.display='flex';
+}
+function buildTabs(ids,labels){
+  document.getElementById('tabsBar').innerHTML=ids.map((id,i)=>
+    `<button class="tab${i===0?' active':''}" onclick="showTab('${id}',this)">${labels[i]}</button>`
+  ).join('');
+}
+function showTab(name,btn){
+  currentTab=name;
+  if(btn){document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+  renderTab(name);
+}
+function renderTab(name){
+  const c=document.getElementById('mainContent');
+  if(name==='network')   {c.innerHTML=netHTML();    postNet();}
+  else if(name==='trees')    {c.innerHTML=treeHTML();   postTree();}
+  else if(name==='farming')  {c.innerHTML=farmHTML();   postFarm();}
+  else if(name==='ecosystem'){c.innerHTML=ecoHTML();    postEco();}
+  else if(name==='jumptask') {c.innerHTML=jtHTML();     postJt();}
+  updateDayBar();
+}
+
+// ══════════════════════════════════════════
+// DAY BAR (global)
+// ══════════════════════════════════════════
+function selectDayBar(d){
+  currentDay=d;
+  document.getElementById('dayBadge').textContent=DAY_NAMES[d];
+  renderTab(currentTab);
+}
+function updateDayBar(){
+  for(let d=0;d<7;d++){
+    const btn=document.querySelector(`.daybtn[data-d="${d}"]`);
+    if(!btn) continue;
+    btn.classList.toggle('active',d===currentDay);
+    btn.classList.toggle('today',d===appDay()&&d!==currentDay);
+    // mini progress for current tab
+    let done=0,total=0;
+    if(currentTab==='network'){
+      total=NET_ACCOUNTS.length*4;
+      NET_ACCOUNTS.forEach(a=>{for(let s=0;s<4;s++) if((state[sk('net',currentWeekId,d,a.name,s)]||0)===1) done++;});
+    } else if(currentTab==='trees'){
+      total=TREE_ACCOUNTS.length*2;
+      TREE_ACCOUNTS.forEach(a=>{for(let s=0;s<2;s++) if((state[sk('tree',currentWeekId,d,a.name,s)]||0)===1) done++;});
+    } else if(currentTab==='farming'){
+      const sl=FARM_SLOTS[d];
+      FARM_ACCOUNTS.forEach(a=>{
+        if(getGanso(a.name)){
+          total+=sl*3;
+          for(let s=0;s<sl;s++) for(const p of ['t','bl','br']) if((state[sk('farm',currentWeekId,d,a.name,s+'_'+p)]||0)===1) done++;
+        } else {total+=sl; for(let s=0;s<sl;s++) if((state[sk('farm',currentWeekId,d,a.name,s)]||0)===1) done++;}
+      });
+    } else if(currentTab==='ecosystem'){
+      total=ECO_ACCOUNTS.length;
+      ECO_ACCOUNTS.forEach(a=>{if((state[sk('eco',currentWeekId,d,a.name,0)]||0)===1) done++;});
+    }
+    const ep=document.getElementById(`dp${d}`);
+    if(ep) ep.textContent=done>0?`${done}`:'';
+  }
+}
+
+// ══════════════════════════════════════════
+// DOT CYCLE
+// ══════════════════════════════════════════
+function dotCls(v,isTc){
+  if(v===1) return isTc?'checked tc-dot':'checked';
+  if(v===2) return 'missed';
+  return '';
+}
+function cycleDot(el,sec){
+  const k=el.dataset.k, isTc=el.dataset.tc==='1';
+  const cur=state[k]||0, nxt=(cur+1)%3;
+  state[k]=nxt; el.className='dot'+(nxt===1?(isTc?' checked tc-dot':' checked'):nxt===2?' missed':'');
+  saveState();
+  if(nxt===1) showToast('✓ Feito!',false);
+  else if(nxt===2) showToast('✕ Não realizado',true);
+  if(sec==='net')  postNet();
+  if(sec==='tree') postTree();
+  if(sec==='farm') postFarm();
+  if(sec==='eco')  postEco();
+  if(sec==='jt')   postJt();
+  updateDayBar();
+}
+
+// ══════════════════════════════════════════
+// MÍNIMOS DE SAQUE
+// ══════════════════════════════════════════
+const SAQUE_MIN = {net:3000, tree:30000, farm:50000, eco:null, jt:0.5};
+
+function saqueColorClass(sec, total){
+  const min = SAQUE_MIN[sec];
+  if(!min) return 'yellow'; // ecosystem sem saque
+  if(total >= min) return 'green';
+  if(total >= min * 0.9) return 'yellow';
+  return 'red';
+}
+
+function skSaque(sec, acc){ return `saques|${sec}|${acc}`; }
+function getSaques(sec, acc){ return state[skSaque(sec,acc)] || {count:0, total:0}; }
+function addSaque(sec, acc, valor){
+  const s = getSaques(sec, acc);
+  s.count += 1;
+  s.total += valor;
+  state[skSaque(sec,acc)] = s;
+  saveState();
+}
+
+// ══════════════════════════════════════════
+// SALDO HTML
+// ══════════════════════════════════════════
+function saldoBlockHTML(sec, accounts, currency, showDtreg){
+  const cur = currency || 'TC';
+  const hasSaque = !!SAQUE_MIN[sec];
+  const appNome = {net:'TTCoin Network', tree:'TTCoin Trees', farm:'Farming TC', eco:'Ecosystem'}[sec] || sec;
+
+  const rows = accounts.map(a => {
+    const val = getSaldo(sec, a.name);
+    const ae  = encA(a.name);
+
+    // saques do extrato (inclui manuais e automáticos)
+    const saquesExt = getExtrato().filter(m=>
+      m.tipo==='app-wallet' &&
+      m.origem === `${appNome} · ${a.name}`
+    );
+    const saquesConc  = saquesExt.filter(m=>m.status==='concluido');
+    const saquesPend  = saquesExt.filter(m=>m.status==='solicitado');
+    const totalConc   = saquesConc.reduce((s,m)=>s+m.valor,0);
+    const totalPend   = saquesPend.reduce((s,m)=>s+m.valor,0);
+
+    const saqueInfo = hasSaque && saquesExt.length > 0 ? `
+      <div class="saque-info">
+        💸 ${saquesConc.length}x concluído · ${fmtTC(totalConc)} ${cur}
+        ${saquesPend.length>0?`<br>⏳ ${saquesPend.length}x pendente · ${fmtTC(totalPend)} ${cur}`:''}
+      </div>` : '';
+
+    const saqueBtn = hasSaque
+      ? `<button class="saque-btn" onclick="abrirSaque('${sec}','${ae}')">💸 Registrar saque</button>`
+      : '';
+
+    return `<div class="saldo-row">
+      <div class="saldo-left">
+        <div class="saldo-name">${a.name}
+          ${a.email ? `<div class="saldo-email">${a.email}</div>` : ''}
+          ${showDtreg && a.dtreg ? `<div class="saldo-dtreg">Reg: ${a.dtreg}</div>` : ''}
+        </div>
+        ${saqueInfo}
+        ${saqueBtn}
+      </div>
+      <div class="saldo-right">
+        <input class="saldo-input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0,00" value="${val}"
+          oninput="onSaldoInput(this,'${sec}','${ae}')">
+        <div class="saldo-total red" id="stot-${sec}-${ae}">= 0 ${cur}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="saldo-card">
+    <div class="saldo-hdr"><div class="saldo-hdr-title">💰 Saldo da Semana${hasSaque?` · mín. saque: ${fmtTC(SAQUE_MIN[sec])} ${cur}`:''}</div></div>
+    ${rows}
+  </div>`;
+}
+
+function onSaldoInput(el,sec,accEnc){
+  const acc=decA(accEnc);
+  state[skSaldo(sec,currentWeekId,acc)]=el.value;
+  saveState();
+  // Atualizar saldo final da semana anterior no histórico
+  atualizarSaldoFinalHist(sec, acc, parseFmt(el.value)||0);
+  updateAfterSaldo(sec);
+}
+
+function atualizarSaldoFinalHist(sec, acc, saldoFinal){
+  const hist=JSON.parse(localStorage.getItem('cc_hist')||'[]');
+  if(!hist.length) return;
+  // A semana mais recente do histórico é a anterior à atual
+  const snap=hist[0];
+  if(!snap.apps[sec]) return;
+  if(!snap.apps[sec][acc]) return;
+  snap.apps[sec][acc].saldoFinal=saldoFinal;
+  // Calcular ganho real = saldoFinal - base
+  const base=snap.apps[sec][acc].base||0;
+  snap.apps[sec][acc].ganhoReal=saldoFinal-base;
+  localStorage.setItem('cc_hist',JSON.stringify(hist));
+}
+function updateAfterSaldo(sec){
+  if(sec==='net') postNet();
+  else if(sec==='tree') postTree();
+  else if(sec==='farm') postFarm();
+  else if(sec==='eco')  postEco();
+}
+
+// Atualiza cor do total de saldo
+function updateSaldoColor(sec, acc, total){
+  const el = document.getElementById(`stot-${sec}-${encA(acc)}`);
+  if(!el) return;
+  el.className = 'saldo-total ' + saqueColorClass(sec, total);
+}
+
+// ── SAQUE ──
+let _saqueCtx = {};
+let _sqStatus = 'solicitado';
+
+function abrirSaque(sec, ae){
+  const acc=decA(ae);
+  _saqueCtx={sec,acc};
+  _sqStatus='solicitado';
+  const el=document.getElementById(`stot-${sec}-${ae}`);
+  document.getElementById('saque-acc-label').textContent=acc;
+  document.getElementById('saque-acc-sub').textContent=
+    `${({net:'TTCoin Network',tree:'TTCoin Trees',farm:'Farming TC',eco:'Ecosystem'}[sec]||sec)} · Saldo: ${el?el.textContent:'—'} · Mín: ${SAQUE_MIN[sec]?fmtTC(SAQUE_MIN[sec])+' TC':'—'}`;
+  document.getElementById('saqueDataSolic').value=localDateStr();
+  document.getElementById('saqueHoraSolic').value=new Date().toTimeString().slice(0,5);
+  document.getElementById('saqueDestino').value='';
+  document.getElementById('saqueDestinoAppWrap').style.display='none';
+  document.getElementById('saqueEnderecoWallet').value='';
+  document.getElementById('saqueHash').value='';
+  document.getElementById('saqueNovoSaldo').value='';
+  document.getElementById('saqueObs').value='';
+  document.getElementById('saqueDataConclusaoWrap').style.display='none';
+  document.querySelectorAll('[data-sq-status]').forEach(b=>b.classList.toggle('active',b.dataset.sqStatus==='solicitado'));
+  openModal('saqueModal');
+}
+
+function confirmarSaque(){
+  const {sec, acc} = _saqueCtx;
+  const destino        = document.getElementById('saqueDestino').value;
+  const destinoApp     = document.getElementById('saqueDestinoApp').value;
+  const dataSolic      = document.getElementById('saqueDataSolic').value;
+  const horaSolic      = document.getElementById('saqueHoraSolic').value;
+  const enderecoWallet = document.getElementById('saqueEnderecoWallet').value.trim();
+  const hash           = document.getElementById('saqueHash').value.trim();
+  const obs            = document.getElementById('saqueObs').value.trim();
+  const dataConc       = _sqStatus==='concluido' ? document.getElementById('saqueDataConclusao').value : null;
+  const horaConc       = _sqStatus==='concluido' ? document.getElementById('saqueHoraConclusao').value : null;
+
+  if(!destino){ alert('Selecione o destino do saque.'); return; }
+  const valorSacado = parseFmt(document.getElementById('saqueNovoSaldo').value);
+  if(!valorSacado || valorSacado <= 0){ alert('Informe o valor sacado.'); return; }
+
+  // zerar saldo do app após saque
+  state[skSaldo(sec, currentWeekId, acc)] = '';
+  // se for JumpTask, zerar coletas da semana desta conta
+  if(sec==='jt'){
+    for(let d=0;d<7;d++) delete state[skJt(acc,d)];
+    saveState();
+  }
+
+  // registrar no histórico de saques
+  addSaque(sec, acc, valorSacado);
+
+  // lançar no extrato da carteira
+  const appNome     = {net:'TTCoin Network', tree:'TTCoin Trees', farm:'Farming TC', eco:'Ecosystem'}[sec] || sec;
+  const origemLabel = `${appNome} · ${acc}`;
+  const destinoLabel= destino==='app' ? destinoApp : destino;
+  const tipo        = destino==='app' ? 'app-app' : 'app-wallet';
+  const ext = getExtrato();
+  ext.push({
+    id: Date.now().toString(),
+    tipo, origem: origemLabel, destino: destinoLabel,
+    valor: valorSacado,
+    data: dataSolic || localDateStr(),
+    hora: horaSolic || null,
+    dataConclusao: dataConc || null,
+    horaConclusao: horaConc || null,
+    enderecoWallet: enderecoWallet || null,
+    hash: hash || null,
+    obs: obs || `${appNome} — ${acc}`,
+    status: _sqStatus,
+  });
+  saveExtrato(ext);
+
+  // lançar na Timeline automaticamente
+  const movId = ext[ext.length-1].id; // ID do movimento recém criado
+  const evs = getEventos();
+  evs.push({
+    id: 'saque_' + Date.now().toString(),
+    movId: movId, // vínculo com o extrato
+    data: dataSolic || localDateStr(),
+    tipo: 'saque',
+    titulo: `Saque ${appNome} — ${acc}`,
+    desc: [
+      `${fmtTC(valorSacado)} TC → ${destinoLabel}`,
+      enderecoWallet ? enderecoWallet : '',
+      obs || '',
+      dataConc ? `Conc. em ${new Date(dataConc+'T12:00:00').toLocaleDateString('pt-BR')}${horaConc?' '+horaConc:''}` : '',
+    ].filter(Boolean).join(' · '),
+    conta: acc,
+    valor: valorSacado,
+    autoGerado: true,
+  });
+  saveEventos(evs);
+
+  saveState();
+  closeModal('saqueModal');
+  showToast(`✓ Saque de ${fmtTC(valorSacado)} TC registrado!`, false);
+  renderTab(currentTab);
+}
+
+function parseFmt(s){
+  // parse "= 1.234,56 TC" ou "1.234,56" ou "1234.56"
+  if(!s) return 0;
+  const clean = String(s).replace(/[^\d,.]/g,'');
+  // formato pt-BR: ponto = milhar, vírgula = decimal
+  return parseFloat(clean.replace(/\./g,'').replace(',','.')) || 0;
+}
+
+// ══════════════════════════════════════════
+// ENCODE/DECODE account name for HTML IDs
+// ══════════════════════════════════════════
+function encA(s){return encodeURIComponent(s).replace(/%/g,'_');}
+function decA(s){try{return decodeURIComponent(s.replace(/_/g,'%'));}catch(e){return s;}}
+
+// ══════════════════════════════════════════
+// NETWORK
+// ══════════════════════════════════════════
+function netHTML(){
+  const d=currentDay;
+  const rows=NET_ACCOUNTS.map(a=>{
+    let dots='';
+    for(let s=0;s<4;s++){
+      const k=sk('net',currentWeekId,d,a.name,s);
+      dots+=`<div class="dot ${dotCls(state[k]||0,false)}" data-k="${k}" onclick="cycleDot(this,'net')"></div>`;
+    }
+    return `<div class="acc-row">
+      <div class="acc-name">${a.name}<div class="acc-email-s">${a.email}</div></div>
+      <div class="dots-wrap">${dots}</div>
+    </div>`;
+  }).join('');
+  return `
+  <div class="card">
+    <div class="card-hdr">
+      <div><div class="card-title">TTCoin Network</div><div class="card-sub">4 coletas/dia · 30 TC · a cada 6h</div></div>
+      <button class="reset-btn" onclick="resetDay('net')">Resetar</button>
+    </div>${rows}
+    <div class="prog-wrap">
+      <div class="prog-lbl"><span>Hoje</span><span id="net-prog-label">0/0</span></div>
+      <div class="prog-bar"><div class="prog-fill" id="net-prog-fill" style="width:0%"></div></div>
+    </div>
+  </div>`+saldoBlockHTML('net',NET_ACCOUNTS,'TC',false);
+}
+function postNet(){
+  const d=currentDay;
+  let done=0, total=NET_ACCOUNTS.length*4, tcDay=0, tcWeek=0;
+  NET_ACCOUNTS.forEach(a=>{
+    // coletas do dia atual
+    for(let s=0;s<4;s++){
+      if((state[sk('net',currentWeekId,d,a.name,s)]||0)===1){ done++; tcDay+=TC_NET; }
+    }
+    // saldo acumulado semana (para o card de saldo)
+    let base=getSaldoNumeric('net',a.name), earned=0;
+    for(let dd=0;dd<7;dd++) for(let s=0;s<4;s++)
+      if((state[sk('net',currentWeekId,dd,a.name,s)]||0)===1) earned+=TC_NET;
+    tcWeek+=earned;
+    const tot=base+earned;
+    const el=document.getElementById(`stot-net-${encA(a.name)}`);
+    if(el){ el.textContent=`= ${fmtTC(tot)} TC`; el.className='saldo-total '+saqueColorClass('net',tot); }
+  });
+  setProg('net',done,total);
+  setEl('sum-net',`${done}/${total}`);
+  setEl('sum-net-tc',`+${fmtTC(tcDay)} TC`);
+  updateTotal();
+}
+
+// ══════════════════════════════════════════
+// TREES
+// ══════════════════════════════════════════
+function treeHTML(){
+  const d=currentDay;
+  const rows=TREE_ACCOUNTS.map(a=>{
+    let dots='';
+    for(let s=0;s<2;s++){
+      const k=sk('tree',currentWeekId,d,a.name,s);
+      dots+=`<div class="dot ${dotCls(state[k]||0,false)}" data-k="${k}" onclick="cycleDot(this,'tree')"></div>`;
+    }
+    return `<div class="acc-row">
+      <div class="acc-name">${a.name}<div class="acc-email-s">${a.email}</div></div>
+      <div class="dots-wrap">${dots}</div>
+    </div>`;
+  }).join('');
+  return `
+  <div class="card">
+    <div class="card-hdr">
+      <div><div class="card-title">TTCoin Trees</div><div class="card-sub">2 coletas/dia · 25 TC · a cada 12h</div></div>
+      <button class="reset-btn" onclick="resetDay('tree')">Resetar</button>
+    </div>${rows}
+    <div class="prog-wrap">
+      <div class="prog-lbl"><span>Hoje</span><span id="tree-prog-label">0/0</span></div>
+      <div class="prog-bar"><div class="prog-fill" id="tree-prog-fill" style="width:0%"></div></div>
+    </div>
+  </div>`+saldoBlockHTML('tree',TREE_ACCOUNTS,'TC',false);
+}
+function postTree(){
+  const d=currentDay;
+  let done=0, total=TREE_ACCOUNTS.length*2, tcDay=0;
+  TREE_ACCOUNTS.forEach(a=>{
+    for(let s=0;s<2;s++)
+      if((state[sk('tree',currentWeekId,d,a.name,s)]||0)===1){ done++; tcDay+=TC_TREE; }
+    let base=getSaldoNumeric('tree',a.name), earned=0;
+    for(let dd=0;dd<7;dd++) for(let s=0;s<2;s++)
+      if((state[sk('tree',currentWeekId,dd,a.name,s)]||0)===1) earned+=TC_TREE;
+    const tot=base+earned;
+    const el=document.getElementById(`stot-tree-${encA(a.name)}`);
+    if(el){ el.textContent=`= ${fmtTC(tot)} TC`; el.className='saldo-total '+saqueColorClass('tree',tot); }
+  });
+  setProg('tree',done,total);
+  setEl('sum-tree',`${done}/${total}`);
+  setEl('sum-tree-tc',`+${fmtTC(tcDay)} TC`);
+  updateTotal();
+}
+
+// ══════════════════════════════════════════
+// FARMING
+// ══════════════════════════════════════════
+function farmHTML(){
+  const d=currentDay, sl=FARM_SLOTS[d];
+  const rows=FARM_ACCOUNTS.map(a=>{
+    const ganso=getGanso(a.name), ae=encA(a.name);
+    let sHTML='';
+    for(let s=0;s<sl;s++){
+      if(ganso){
+        const kT =sk('farm',currentWeekId,d,a.name,s+'_t');
+        const kBL=sk('farm',currentWeekId,d,a.name,s+'_bl');
+        const kBR=sk('farm',currentWeekId,d,a.name,s+'_br');
+        sHTML+=`<div class="farm-slot">
+          <div class="dot ${dotCls(state[kBL]||0,true)}" data-k="${kBL}" data-tc="1" onclick="cycleDot(this,'farm')"></div>
+          <div class="farm-slot-bottom">
+            <div class="dot ${dotCls(state[kBR]||0,false)}" data-k="${kBR}" onclick="cycleDot(this,'farm')"></div>
+            <div class="dot ${dotCls(state[kT]||0,false)}"  data-k="${kT}"  onclick="cycleDot(this,'farm')"></div>
+          </div>
+        </div>`;
+      } else {
+        const k=sk('farm',currentWeekId,d,a.name,s);
+        sHTML+=`<div class="farm-slot">
+          <div class="dot ${dotCls(state[k]||0,true)}" data-k="${k}" data-tc="1" onclick="cycleDot(this,'farm')"></div>
+        </div>`;
+      }
+    }
+    return `<div class="acc-row" style="align-items:center;flex-wrap:wrap;gap:8px;padding:10px 14px;">
+      <div class="acc-name" style="min-width:90px;">${a.name}
+        <div class="ganso-wrap">
+          <button class="ganso-toggle${ganso?' on':''}" id="gt-${ae}" onclick="toggleGanso('${ae}')"></button>
+          <span class="ganso-label${ganso?' on':''}" id="gl-${ae}">${ganso?'🪿 Ganso':'Sem animal'}</span>
+        </div>
+      </div>
+      <div class="farm-dots-grid" id="fsl-${ae}">${sHTML}</div>
+    </div>`;
+  }).join('');
+
+  return `
+  <div class="card">
+    <div class="card-hdr">
+      <div><div class="card-title">Farming TC — ${DAY_FULL[d]}</div>
+        <div class="card-sub">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--green-dark);margin-right:3px;vertical-align:middle;"></span>TC (2h)
+          &nbsp;
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--green);margin-right:3px;vertical-align:middle;"></span>Ração (1h)
+        </div></div>
+      <button class="reset-btn" onclick="resetDay('farm')">Resetar</button>
+    </div>${rows}
+    <div class="prog-wrap">
+      <div class="prog-lbl"><span>Coletas hoje</span><span id="farm-prog-label">0/0</span></div>
+      <div class="prog-bar"><div class="prog-fill" id="farm-prog-fill" style="width:0%"></div></div>
+    </div>
+  </div>`+saldoBlockHTML('farm',FARM_ACCOUNTS,'TC',true);
+}
+
+function toggleGanso(ae){
+  const acc=decA(ae), val=!getGanso(acc);
+  const d=currentDay, sl=FARM_SLOTS[d];
+
+  // Migrar estados da bolinha TC ao alternar
+  for(let s=0;s<sl;s++){
+    if(val){
+      // Ativando ganso: 1 bolinha → 3 bolinhas
+      // copiar estado de sk(s) para sk(s+'_bl') preservando TC
+      const kSingle = sk('farm',currentWeekId,d,acc,s);
+      const kBL     = sk('farm',currentWeekId,d,acc,s+'_bl');
+      if(state[kSingle] !== undefined){
+        state[kBL] = state[kSingle]; // preserva TC
+        delete state[kSingle];       // limpa chave antiga
+      }
+      // ração começa zerada
+      delete state[sk('farm',currentWeekId,d,acc,s+'_br')];
+      delete state[sk('farm',currentWeekId,d,acc,s+'_t')];
+    } else {
+      // Desativando ganso: 3 bolinhas → 1 bolinha
+      // copiar estado de sk(s+'_bl') para sk(s) preservando TC
+      const kBL     = sk('farm',currentWeekId,d,acc,s+'_bl');
+      const kSingle = sk('farm',currentWeekId,d,acc,s);
+      if(state[kBL] !== undefined){
+        state[kSingle] = state[kBL]; // preserva TC
+        delete state[kBL];           // limpa chave antiga
+      }
+      // remove bolinhas de ração
+      delete state[sk('farm',currentWeekId,d,acc,s+'_br')];
+      delete state[sk('farm',currentWeekId,d,acc,s+'_t')];
+    }
+  }
+
+  setGanso(acc,val);
+  saveState();
+
+  const wrap=document.getElementById(`fsl-${ae}`);
+  const btn=document.getElementById(`gt-${ae}`);
+  const lbl=document.getElementById(`gl-${ae}`);
+  if(btn) btn.classList.toggle('on',val);
+  if(lbl){lbl.textContent=val?'🪿 Ganso':'Sem animal';lbl.classList.toggle('on',val);}
+  if(!wrap) return;
+
+  let html='';
+  for(let s=0;s<sl;s++){
+    if(val){
+      const kT =sk('farm',currentWeekId,d,acc,s+'_t');
+      const kBL=sk('farm',currentWeekId,d,acc,s+'_bl');
+      const kBR=sk('farm',currentWeekId,d,acc,s+'_br');
+      html+=`<div class="farm-slot">
+        <div class="dot ${dotCls(state[kBL]||0,true)}" data-k="${kBL}" data-tc="1" onclick="cycleDot(this,'farm')"></div>
+        <div class="farm-slot-bottom">
+          <div class="dot ${dotCls(state[kBR]||0,false)}" data-k="${kBR}" onclick="cycleDot(this,'farm')"></div>
+          <div class="dot ${dotCls(state[kT]||0,false)}"  data-k="${kT}"  onclick="cycleDot(this,'farm')"></div>
+        </div>
+      </div>`;
+    } else {
+      const k=sk('farm',currentWeekId,d,acc,s);
+      html+=`<div class="farm-slot">
+        <div class="dot ${dotCls(state[k]||0,true)}" data-k="${k}" data-tc="1" onclick="cycleDot(this,'farm')"></div>
+      </div>`;
+    }
+  }
+  wrap.innerHTML=html;
+  postFarm();
+}
+
+function farmEarnedDay(acc,d){
+  const sl=FARM_SLOTS[d], ganso=getGanso(acc);
+  let tc=0;
+  if(ganso){
+    for(let s=0;s<sl;s++){
+      if((state[sk('farm',currentWeekId,d,acc,s+'_bl')]||0)===1) tc+=30;
+      if((state[sk('farm',currentWeekId,d,acc,s+'_br')]||0)===1) tc+=TC_RACAO;
+      if((state[sk('farm',currentWeekId,d,acc,s+'_t')]||0)===1)  tc+=TC_RACAO;
+    }
+  } else {
+    for(let s=0;s<sl;s++) if((state[sk('farm',currentWeekId,d,acc,s)]||0)===1) tc+=30;
+  }
+  return tc;
+}
+
+function postFarm(){
+  const d=currentDay, sl=FARM_SLOTS[d];
+  let done=0, total=0, dayTC=0;
+  FARM_ACCOUNTS.forEach(a=>{
+    const ganso=getGanso(a.name);
+    if(ganso){
+      total+=sl*3;
+      for(let s=0;s<sl;s++) for(const p of ['_bl','_br','_t'])
+        if((state[sk('farm',currentWeekId,d,a.name,s+p)]||0)===1) done++;
+    } else {
+      total+=sl;
+      for(let s=0;s<sl;s++) if((state[sk('farm',currentWeekId,d,a.name,s)]||0)===1) done++;
+    }
+    dayTC+=farmEarnedDay(a.name,d);
+    // saldo acumulado (semana toda) para o card de saldo
+    let earned=0;
+    for(let dd=0;dd<7;dd++) earned+=farmEarnedDay(a.name,dd);
+    const base=getSaldoNumeric('farm',a.name);
+    const tot=base+earned;
+    const el=document.getElementById(`stot-farm-${encA(a.name)}`);
+    if(el){ el.textContent=`= ${fmtTC(tot)} TC`; el.className='saldo-total '+saqueColorClass('farm',tot); }
+  });
+  setProg('farm',done,total);
+  setEl('sum-farm',`${done}/${total}`);
+  setEl('sum-farm-tc',`+${fmtTC(dayTC)} TC`);
+  updateTotal();
+}
+
+// ══════════════════════════════════════════
+// ECOSYSTEM
+// ══════════════════════════════════════════
+function ecoHTML(){
+  const d=currentDay;
+  const rows=ECO_ACCOUNTS.map(a=>{
+    const k=sk('eco',currentWeekId,d,a.name,0);
+    return `<div class="acc-row">
+      <div class="acc-name">${a.name}<div class="acc-email-s">${a.email}</div></div>
+      <div class="dots-wrap">
+        <div class="dot ${dotCls(state[k]||0,false)}" data-k="${k}" onclick="cycleDot(this,'eco')"></div>
+      </div>
+    </div>`;
+  }).join('');
+  return `
+  <div class="card">
+    <div class="card-hdr">
+      <div><div class="card-title" style="color:var(--tcmc)">TTCoin Ecosystem</div><div class="card-sub">1 coleta/dia · 1.000 TCMC · a cada 24h</div></div>
+      <button class="reset-btn" onclick="resetDay('eco')">Resetar</button>
+    </div>${rows}
+    <div class="prog-wrap">
+      <div class="prog-lbl"><span>Hoje</span><span id="eco-prog-label">0/0</span></div>
+      <div class="prog-bar"><div class="prog-fill" id="eco-prog-fill" style="background:linear-gradient(90deg,var(--tcmc),var(--blue));width:0%"></div></div>
+    </div>
+  </div>`+saldoBlockHTML('eco',ECO_ACCOUNTS,'TCMC',false);
+}
+function postEco(){
+  const d=currentDay;
+  let done=0,total=ECO_ACCOUNTS.length,wkTCMC=0;
+  ECO_ACCOUNTS.forEach(a=>{
+    if((state[sk('eco',currentWeekId,d,a.name,0)]||0)===1) done++;
+    let earned=0;
+    for(let dd=0;dd<7;dd++) if((state[sk('eco',currentWeekId,dd,a.name,0)]||0)===1) earned+=TCMC_ECO;
+    wkTCMC+=earned;
+    const base=getSaldoNumeric('eco',a.name);
+    const el=document.getElementById(`stot-eco-${encA(a.name)}`);
+    if(el) el.textContent=`= ${fmtTC(base+earned)} TCMC`;
+  });
+  setProg('eco',done,total);
+}
+
+// ══════════════════════════════════════════
+// JUMPTASK
+// ══════════════════════════════════════════
+// ══════════════════════════════════════════
+// JUMPTASK — coleta com valor JMPT
+// ══════════════════════════════════════════
+const JMPT_MIN_SAQUE = 0.5;
+
+function skJt(acc, day, wid){ return `jt|${wid||currentWeekId}|${day}|${acc}|val`; }
+function getJtColeta(acc, day, wid){ return parseFloat(state[skJt(acc,day,wid||currentWeekId)]||0)||0; }
+function setJtColeta(acc, day, val){ state[skJt(acc,day)]=val; saveState(); }
+function getSaldoJt(acc){ return state[skSaldo('jt',currentWeekId,acc)]||''; }
+function getSaldoJtNum(acc){ return parseFmt(getSaldoJt(acc))||0; }
+
+function jmptColorClass(total){
+  if(total>=JMPT_MIN_SAQUE) return 'green';
+  if(total>=JMPT_MIN_SAQUE*0.9) return 'yellow';
+  return 'red';
+}
+
+function jtHTML(){
+  const d=currentDay;
+
+  // card de saldo
+  const saldoRows = JT_ACCOUNTS.map(a=>{
+    const ae=encA(a.name);
+    const val=getSaldoJt(a.name);
+    const saquesExt=getExtrato().filter(m=>m.tipo==='app-wallet'&&m.origem===`JumpTask · ${a.name}`);
+    const saquesConc=saquesExt.filter(m=>m.status==='concluido');
+    const saquesPend=saquesExt.filter(m=>m.status==='solicitado');
+    const totalConc=saquesConc.reduce((s,m)=>s+m.valor,0);
+    const totalPend=saquesPend.reduce((s,m)=>s+m.valor,0);
+    const saqueInfo=saquesExt.length>0?`
+      <div class="saque-info">
+        💸 ${saquesConc.length}x concluído · ${fmtJmpt(totalConc)} JMPT
+        ${saquesPend.length>0?`<br>⏳ ${saquesPend.length}x pendente · ${fmtJmpt(totalPend)} JMPT`:''}
+      </div>`:'';
+    return `<div class="saldo-row">
+      <div class="saldo-left">
+        <div class="saldo-name">${a.name}
+          <div class="saldo-email">${a.email}</div>
+          ${a.wallet?`<div class="saldo-email" style="color:var(--tcmc);">👛 ${a.wallet}</div>`:''}
+        </div>
+        ${saqueInfo}
+        <button class="saque-btn" onclick="abrirSaqueJt('${ae}')">💸 Registrar saque</button>
+      </div>
+      <div class="saldo-right">
+        <input class="saldo-input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.000" value="${val}"
+          oninput="onSaldoInput(this,'jt','${ae}');postJt()">
+        <div class="saldo-total red" id="stot-jt-${ae}">= 0 JMPT</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // card de coletas — campo pré-preenchido com 0.000
+  const rows = JT_ACCOUNTS.map(a=>{
+    const ae=encA(a.name);
+    const val=getJtColeta(a.name,d);
+    const marcado=val>0;
+    return `<div class="acc-row" style="gap:8px;">
+      <div class="acc-name">${a.name}</div>
+      <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;flex:1;">
+        <input type="text" inputmode="decimal"
+          placeholder="0.0"
+          value="${marcado ? val : ''}"
+          style="background:var(--bg);border:1px solid ${marcado?'var(--green)':'var(--border)'};
+                 color:${marcado?'var(--green)':'var(--text)'};
+                 font-size:12px;font-weight:700;padding:5px 8px;border-radius:6px;
+                 width:80px;text-align:right;font-family:'Rajdhani',sans-serif;"
+          onfocus="if(!this.value||this.value==='0.000'){this.value='0.0';} setTimeout(()=>{this.selectionStart=this.selectionEnd=this.value.length;},0);"
+          oninput="registrarColetaJt(this,'${ae}',${d})"
+          onblur="const v=parseFloat(this.value.replace(',','.'));if(!v||v<=0){this.value='';limparColetaJtSilent('${ae}',${d});}">
+        <span style="font-size:10px;color:var(--muted);">JMPT</span>
+        ${marcado?`<button onclick="limparColetaJt('${ae}',${d})"
+          style="background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:2px;">✕</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  return `
+  <div class="card">
+    <div class="card-hdr">
+      <div><div class="card-title" style="color:var(--purple)">JumpTask</div>
+        <div class="card-sub">1 coleta/dia · ~$0,01 em JMPT · mín. saque: ${JMPT_MIN_SAQUE} JMPT</div></div>
+      <button class="reset-btn" onclick="resetDay('jt')">Resetar</button>
+    </div>${rows}
+    <div class="prog-wrap">
+      <div class="prog-lbl"><span>Hoje</span><span id="jt-prog-label">0/${JT_ACCOUNTS.length}</span></div>
+      <div class="prog-bar"><div class="prog-fill" id="jt-prog-fill" style="background:var(--purple);width:0%"></div></div>
+    </div>
+  </div>
+  <div class="saldo-card">
+    <div class="saldo-hdr"><div class="saldo-hdr-title">💰 Saldo da Semana · mín. saque: ${JMPT_MIN_SAQUE} JMPT</div></div>
+    ${saldoRows}
+  </div>`;
+}
+
+function fmtJmpt(v){
+  if(!v&&v!==0) return '—';
+  return parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:3,maximumFractionDigits:6});
+}
+
+function registrarColetaJt(el, ae, day){
+  const acc=decA(ae);
+  const raw=el.value.replace(',','.');
+  const val=parseFloat(raw)||0;
+  setJtColeta(acc,day,val>0?val:0);
+  // atualizar visual do input
+  el.style.borderColor = val>0?'var(--green)':'var(--border)';
+  el.style.color       = val>0?'var(--green)':'var(--text)';
+  postJt();
+}
+
+function limparColetaJt(ae, day){
+  const acc=decA(ae);
+  setJtColeta(acc,day,0);
+  renderTab('jumptask');
+}
+
+function postJt(){
+  const d=currentDay;
+  let done=0, total=JT_ACCOUNTS.length, dayJmpt=0, weekJmpt=0;
+  JT_ACCOUNTS.forEach(a=>{
+    const v=getJtColeta(a.name,d);
+    if(v>0){ done++; dayJmpt+=v; }
+    let weekEarned=0;
+    for(let dd=0;dd<7;dd++) weekEarned+=getJtColeta(a.name,dd);
+    weekJmpt+=weekEarned;
+    const base=getSaldoJtNum(a.name);
+    const tot=base+weekEarned;
+    const el=document.getElementById(`stot-jt-${encA(a.name)}`);
+    if(el){ el.textContent=`= ${fmtJmpt(tot)} JMPT`; el.className='saldo-total '+jmptColorClass(tot); }
+  });
+  // barra de progresso interna
+  const pct=total>0?Math.round(done/total*100):0;
+  const pl=document.getElementById('jt-prog-label');
+  const pf=document.getElementById('jt-prog-fill');
+  if(pl) pl.textContent=`${done}/${total} · +${fmtJmpt(dayJmpt)} JMPT`;
+  if(pf) pf.style.width=pct+'%';
+  // rodapé jtBar
+  const jtDia=document.getElementById('jt-sum-dia');
+  const jtDiaVal=document.getElementById('jt-sum-dia-val');
+  const jtSem=document.getElementById('jt-sum-semana');
+  if(jtDia) jtDia.textContent=`${done}/${total}`;
+  if(jtDiaVal) jtDiaVal.textContent=`+${fmtJmpt(dayJmpt)} JMPT`;
+  if(jtSem) jtSem.textContent=fmtJmpt(weekJmpt);
+}
+
+function limparColetaJtSilent(ae, day){
+  // limpa sem re-renderizar (chamado no onblur)
+  const acc=decA(ae);
+  setJtColeta(acc,day,0);
+  postJt();
+}
+
+
+let _saqueJtCtx={};
+function abrirSaqueJt(ae){
+  const acc=decA(ae);
+  _saqueJtCtx={acc};
+  _sqStatus='solicitado';
+  const el=document.getElementById(`stot-jt-${ae}`);
+  document.getElementById('saque-acc-label').textContent=acc;
+  document.getElementById('saque-acc-sub').textContent=
+    `JumpTask · Saldo: ${el?el.textContent:'—'} · Mín: ${JMPT_MIN_SAQUE} JMPT`;
+  document.getElementById('saqueDataSolic').value=localDateStr();
+  document.getElementById('saqueHoraSolic').value=new Date().toTimeString().slice(0,5);
+  document.getElementById('saqueDestino').value='';
+  document.getElementById('saqueDestinoAppWrap').style.display='none';
+  document.getElementById('saqueEnderecoWallet').value='';
+  document.getElementById('saqueHash').value='';
+  document.getElementById('saqueNovoSaldo').value='';
+  document.getElementById('saqueObs').value='';
+  document.getElementById('saqueDataConclusaoWrap').style.display='none';
+  document.querySelectorAll('[data-sq-status]').forEach(b=>b.classList.toggle('active',b.dataset.sqStatus==='solicitado'));
+  // label do campo de valor
+  const lbl=document.querySelector('label[for="saqueNovoSaldo"]')||document.querySelector('.mov-form-label');
+  _saqueCtx={sec:'jt', acc};
+  openModal('saqueModal');
+}
+
+// ══════════════════════════════════════════
+// TOTAL DIA
+// ══════════════════════════════════════════
+function updateTotal(){
+  const d=currentDay;
+  let tot=0;
+  NET_ACCOUNTS.forEach(a=>{for(let s=0;s<4;s++) if((state[sk('net',currentWeekId,d,a.name,s)]||0)===1) tot+=TC_NET;});
+  TREE_ACCOUNTS.forEach(a=>{for(let s=0;s<2;s++) if((state[sk('tree',currentWeekId,d,a.name,s)]||0)===1) tot+=TC_TREE;});
+  FARM_ACCOUNTS.forEach(a=>{ tot+=farmEarnedDay(a.name,d); });
+  const el=document.getElementById('sum-total');
+  if(el) el.textContent=fmtTC(tot);
+  updateSemanaLabel();
+}
+
+// ══════════════════════════════════════════
+// RESET
+// ══════════════════════════════════════════
+function resetDay(sec){
+  const d=currentDay;
+  if(!confirm(`Resetar marcações de ${DAY_FULL[d]} em ${sec}?`)) return;
+  Object.keys(state).forEach(k=>{
+    const p=k.split('|');
+    if(p[0]===sec&&p[1]===currentWeekId&&p[2]==d) delete state[k];
+  });
+  saveState(); renderTab(currentTab); showToast('Resetado!',false);
+}
+
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+function setProg(id,done,total){
+  const pct=total>0?Math.round(done/total*100):0;
+  const pl=document.getElementById(`${id}-prog-label`);
+  const pf=document.getElementById(`${id}-prog-fill`);
+  if(pl) pl.textContent=`${done}/${total}`;
+  if(pf) pf.style.width=pct+'%';
+}
+function setEl(id,txt){const e=document.getElementById(id);if(e)e.textContent=txt;}
+function showToast(msg,red){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast'+(red?' red':'');
+  t.classList.add('show'); clearTimeout(window._tt);
+  window._tt=setTimeout(()=>t.classList.remove('show'),1300);
+}
+
+// ══════════════════════════════════════════
+// DAY MODAL
+// ══════════════════════════════════════════
+function openDayModal(){
+  const g=document.getElementById('dayGrid');
+  g.innerHTML=DAY_NAMES.map((d,i)=>{
+    const isTod=i===appDay(), isAct=i===currentDay;
+    return `<div class="day-opt${isAct?' active':''}${isTod&&!isAct?' today-opt':''}" onclick="selectDay(${i})">${d}</div>`;
+  }).join('');
+  openModal('dayModal');
+}
+function selectDay(d){
+  currentDay=d;
+  document.getElementById('dayBadge').textContent=DAY_NAMES[d];
+  closeModal('dayModal'); renderTab(currentTab); updateDayBar();
+}
+
+// ══════════════════════════════════════════
+// WEEK LABEL
+// ══════════════════════════════════════════
+function formatWeekLabel(wid){
+  const s=new Date(wid+'T00:00:00'), e=new Date(s); e.setDate(e.getDate()+6);
+  const f=d=>d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  return `${f(s)} – ${f(e)}`;
+}
+function updateWeekLabel(){
+  const lbl=formatWeekLabel(currentWeekId);
+  const el=document.getElementById('weekLabel');
+  if(el) el.textContent=lbl;
+  const elTop=document.getElementById('weekLabelTop');
+  if(elTop) elTop.textContent=lbl;
+}
+
+// ══════════════════════════════════════════
+// FINALIZAR SEMANA
+// ══════════════════════════════════════════
+function weekIdAnterior(){
+  // Calcula o weekId da semana ANTERIOR à atual
+  const d=new Date();
+  d.setDate(d.getDate()-7);
+  return weekId(d);
+}
+
+function openFinalizar(){
+  const now=new Date();
+  const eDomingo6h=now.getDay()===0&&now.getHours()>=DAY_START;
+  const wid = eDomingo6h ? weekIdAnterior() : currentWeekId;
+
+  if(currentEco==='jumptask'){
+    // Resumo JumpTask
+    let totalBase=0, totalEarned=0;
+    JT_ACCOUNTS.forEach(a=>{
+      totalBase+=getSaldoJtNum(a.name);
+      for(let d=0;d<7;d++) totalEarned+=getJtColeta(a.name,d);
+    });
+    document.getElementById('fin-desc').innerHTML=
+      `<b>Semana:</b> ${formatWeekLabel(wid)}<br><br>`+
+      `⚡ JumpTask<br>`+
+      `Saldo inicial total: <b>${fmtJmpt(totalBase)} JMPT</b><br>`+
+      `Coletas da semana: <b>+${fmtJmpt(totalEarned)} JMPT</b><br>`+
+      `Total estimado: <b>${fmtJmpt(totalBase+totalEarned)} JMPT</b><br><br>`+
+      `Os dados serão salvos no histórico e a semana será resetada.`;
+  } else {
+    // Resumo TTCoin
+    let netTC=0,treeTC=0,farmTC=0,ecoTCMC=0;
+    NET_ACCOUNTS.forEach(a=>{let e=0;for(let d=0;d<7;d++) for(let s=0;s<4;s++) if((state[sk('net',wid,d,a.name,s)]||0)===1) e+=TC_NET; netTC+=(parseFmt(state[skSaldo('net',wid,a.name)]||'0')||0)+e;});
+    TREE_ACCOUNTS.forEach(a=>{let e=0;for(let d=0;d<7;d++) for(let s=0;s<2;s++) if((state[sk('tree',wid,d,a.name,s)]||0)===1) e+=TC_TREE; treeTC+=(parseFmt(state[skSaldo('tree',wid,a.name)]||'0')||0)+e;});
+    FARM_ACCOUNTS.forEach(a=>{let e=0;for(let d=0;d<7;d++) e+=farmEarnedDayWid(a.name,d,wid); farmTC+=(parseFmt(state[skSaldo('farm',wid,a.name)]||'0')||0)+e;});
+    ECO_ACCOUNTS.forEach(a=>{let e=0;for(let d=0;d<7;d++) if((state[sk('eco',wid,d,a.name,0)]||0)===1) e+=TCMC_ECO; ecoTCMC+=(parseFmt(state[skSaldo('eco',wid,a.name)]||'0')||0)+e;});
+    document.getElementById('fin-desc').innerHTML=
+      `<b>Semana:</b> ${formatWeekLabel(wid)}<br><br>`+
+      `📡 Network total: <b>${fmtTC(netTC)} TC</b><br>`+
+      `🌳 Trees total: <b>${fmtTC(treeTC)} TC</b><br>`+
+      `🌾 Farming total: <b>${fmtTC(farmTC)} TC</b><br>`+
+      `🔵 Ecosystem total: <b>${fmtTC(ecoTCMC)} TCMC</b><br><br>`+
+      `Os dados serão salvos no histórico e a semana será resetada.`;
+  }
+  document._finWid = wid;
+  openModal('finModal');
+}
+
+// farmEarnedDay com weekId específico
+function farmEarnedDayWid(acc,d,wid){
+  const sl=FARM_SLOTS[d], ganso=getGanso(acc);
+  let tc=0;
+  if(ganso){
+    for(let s=0;s<sl;s++){
+      if((state[sk('farm',wid,d,acc,s+'_bl')]||0)===1) tc+=30;
+      if((state[sk('farm',wid,d,acc,s+'_br')]||0)===1) tc+=TC_RACAO;
+      if((state[sk('farm',wid,d,acc,s+'_t')]||0)===1)  tc+=TC_RACAO;
+    }
+  } else {
+    for(let s=0;s<sl;s++) if((state[sk('farm',wid,d,acc,s)]||0)===1) tc+=30;
+  }
+  return tc;
+}
+
+function confirmarFinalizar(){
+  const wid = document._finWid || currentWeekId;
+  const hist=JSON.parse(localStorage.getItem('cc_hist')||'[]');
+  const snap={weekId:wid,label:formatWeekLabel(wid),apps:{}};
+
+  const snapApp=(sec,accounts,slots,tcPer,isFarm,isEco)=>{
+    snap.apps[sec]={};
+    accounts.forEach(a=>{
+      const base=parseFmt(state[skSaldo(sec,wid,a.name)]||'0')||0;
+      let earned=0;
+      if(isFarm){for(let d=0;d<7;d++) earned+=farmEarnedDayWid(a.name,d,wid);}
+      else if(isEco){for(let d=0;d<7;d++) if((state[sk(sec,wid,d,a.name,0)]||0)===1) earned+=tcPer;}
+      else{for(let d=0;d<7;d++) for(let s=0;s<slots;s++) if((state[sk(sec,wid,d,a.name,s)]||0)===1) earned+=tcPer;}
+      snap.apps[sec][a.name]={base,earned,total:base+earned};
+    });
+  };
+  snapApp('net',NET_ACCOUNTS,4,TC_NET,false,false);
+  snapApp('tree',TREE_ACCOUNTS,2,TC_TREE,false,false);
+  snapApp('farm',FARM_ACCOUNTS,0,0,true,false);
+  snapApp('eco',ECO_ACCOUNTS,1,TCMC_ECO,false,true);
+
+  // histórico JumpTask — usar wid (semana que está sendo finalizada)
+  const histJt=JSON.parse(localStorage.getItem('cc_hist_jt')||'[]');
+  const snapJt={weekId:wid, label:formatWeekLabel(wid), contas:{}};
+  JT_ACCOUNTS.forEach(a=>{
+    const base=parseFmt(state[skSaldo('jt',wid,a.name)]||'0')||0;
+    let earned=0;
+    for(let d=0;d<7;d++) earned+=getJtColeta(a.name,d,wid);
+    snapJt.contas[a.name]={base, earned, total:base+earned};
+  });
+  histJt.unshift(snapJt);
+  localStorage.setItem('cc_hist_jt',JSON.stringify(histJt));
+
+  hist.unshift(snap);
+  localStorage.setItem('cc_hist',JSON.stringify(hist));
+  localStorage.setItem('cc_fin_weekid', wid);
+  localStorage.setItem('cc_fin_date', localDateStr());
+  syncAfterHistChange();
+
+  // limpar dados da semana finalizada (TTCoin)
+  Object.keys(state).filter(k=>k.includes(`|${wid}|`)).forEach(k=>delete state[k]);
+
+  saveState();
+
+  currentWeekId=weekId(new Date());
+  updateWeekLabel();
+  closeModal('finModal');
+  showToast('✓ Semana finalizada!',false);
+  document.getElementById('finBanner')?.classList.remove('show');
+  document.querySelectorAll('.fin-btn').forEach(b=>b.classList.remove('urgente'));
+  // re-checar para garantir que não volta
+  checkFinSemana();
+  currentDay=appDay();
+  document.getElementById('dayBadge').textContent=DAY_NAMES[currentDay];
+  renderTab(currentTab); updateDayBar();
+}
+
+// ══════════════════════════════════════════
+// HISTÓRICO
+// ══════════════════════════════════════════
+let _histIdx=0;
+let _histSlides=[];
+
+function buildHistCarr(hist, contentFn, deleteFn, emptyMsg){
+  const track=document.getElementById('histCarrTrack');
+  if(!track){ openModal('histModal'); return; }
+  _histSlides=hist; _histIdx=0;
+  track.innerHTML='';
+  if(!hist.length){
+    track.innerHTML=`<div class="hist-slide active"><p style="color:var(--muted);text-align:center;padding:30px 0;">${emptyMsg}</p></div>`;
+    setHistNavLabel(0,0); openModal('histModal'); return;
+  }
+  hist.forEach((s,i)=>{
+    const slide=document.createElement('div');
+    slide.className='hist-slide'+(i===0?' active':' next');
+    slide.innerHTML=`
+      <div class="hist-week">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div class="hist-wk-title" style="margin-bottom:0;">📅 ${s.label}</div>
+          <button onclick="window._histDeleteFn(${i})" style="background:none;border:1px solid var(--red);color:var(--red);border-radius:5px;font-size:10px;padding:2px 7px;cursor:pointer;font-family:'Noto Sans',sans-serif;">🗑️</button>
+        </div>
+        ${contentFn(s,i)}
+      </div>`;
+    track.appendChild(slide);
+  });
+  window._histDeleteFn=deleteFn;
+  setHistNavLabel(0,hist.length);
+  openModal('histModal');
+}
+
+function setHistNavLabel(idx,total){
+  const el=document.getElementById('histNavLabel');
+  if(el) el.textContent=total>0?`${idx+1} / ${total}`:'—';
+}
+
+function histNavPrev(){
+  if(!_histSlides.length||_histIdx<=0) return;
+  const slides=document.getElementById('histCarrTrack').children;
+  slides[_histIdx].className='hist-slide next';
+  _histIdx--;
+  slides[_histIdx].className='hist-slide active';
+  setHistNavLabel(_histIdx,_histSlides.length);
+}
+
+function histNavNext(){
+  if(!_histSlides.length||_histIdx>=_histSlides.length-1) return;
+  const slides=document.getElementById('histCarrTrack').children;
+  slides[_histIdx].className='hist-slide prev';
+  _histIdx++;
+  slides[_histIdx].className='hist-slide active';
+  setHistNavLabel(_histIdx,_histSlides.length);
+}
+
+function openHistoricoJt(){
+  const hist=JSON.parse(localStorage.getItem('cc_hist_jt')||'[]');
+  buildHistCarr(hist, (s)=>{
+    const contas = s.contas || {};
+    if(!Object.keys(contas).length) return '<div style="color:var(--muted);font-size:12px;text-align:center;padding:10px 0;">Sem dados.</div>';
+
+    // Totais gerais
+    let totalBase=0, totalEarned=0;
+    Object.values(contas).forEach(v=>{ totalBase+=v.base||0; totalEarned+=v.earned||0; });
+
+    // Cabeçalho colorido (padrão visual igual ao TTCoin)
+    const divisor=`
+      <div style="display:flex;align-items:center;gap:8px;margin:0 0 10px;">
+        <div style="flex:1;height:1px;background:var(--purple);opacity:.5;"></div>
+        <div style="font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;
+                    color:var(--purple);letter-spacing:.5px;white-space:nowrap;
+                    padding:2px 10px;border-radius:10px;
+                    background:rgba(163,113,247,.1);border:1px solid var(--purple);">⚡ JumpTask</div>
+        <div style="flex:1;height:1px;background:var(--purple);opacity:.5;"></div>
+      </div>`;
+
+    // Resumo geral
+    const resumo=`
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+          <span style="color:var(--muted);">Saldo inicial total</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--text);">${fmtJmpt(totalBase)} JMPT</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+          <span style="color:var(--muted);">Coletas da semana</span>
+          <span style="color:var(--purple);font-family:'Rajdhani',sans-serif;font-weight:700;">+${fmtJmpt(totalEarned)} JMPT</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;border-top:1px solid var(--border);padding-top:4px;margin-top:4px;">
+          <span style="color:var(--muted);font-weight:600;">Total estimado</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--accent2);">${fmtJmpt(totalBase+totalEarned)} JMPT</span>
+        </div>
+      </div>`;
+
+    // Detalhes por conta
+    const detalhes=Object.entries(contas).map(([acc,v])=>`
+      <div style="padding:7px 10px;border-bottom:1px solid var(--border);font-size:11px;">
+        <div style="font-weight:600;color:var(--text);margin-bottom:3px;">${acc}</div>
+        <div style="display:flex;justify-content:space-between;color:var(--muted);margin-bottom:1px;">
+          <span>Inicial</span><span style="font-family:'Rajdhani',sans-serif;">${fmtJmpt(v.base||0)} JMPT</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;color:var(--purple);">
+          <span>Coletas</span><span style="font-family:'Rajdhani',sans-serif;">+${fmtJmpt(v.earned||0)} JMPT</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;color:var(--accent2);border-top:1px dashed var(--border);margin-top:3px;padding-top:3px;">
+          <span>Total</span><span style="font-family:'Rajdhani',sans-serif;font-weight:700;">${fmtJmpt(v.total||0)} JMPT</span>
+        </div>
+      </div>`).join('');
+
+    return divisor + resumo +
+      `<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;">${detalhes}</div>`;
+  }, (i)=>{
+    if(!confirm('Excluir este registro?')) return;
+    const h=JSON.parse(localStorage.getItem('cc_hist_jt')||'[]');
+    h.splice(i,1); localStorage.setItem('cc_hist_jt',JSON.stringify(h));
+    openHistoricoJt(); showToast('Excluído!',false);
+  }, 'Nenhuma semana do JumpTask finalizada ainda.');
+}
+
+function abrirHistorico(){
+  if(currentEco==='jumptask') openHistoricoJt();
+  else openHistorico();
+}
+
+function openHistorico(){
+  const hist=JSON.parse(localStorage.getItem('cc_hist')||'[]');
+
+  const appColors={
+    net:  {label:'📡 Network',   color:'var(--accent)'},
+    tree: {label:'🌳 Trees',     color:'var(--green)'},
+    farm: {label:'🌾 Farming',   color:'#34d399'},
+    eco:  {label:'🔵 Ecosystem', color:'var(--tcmc)'},
+  };
+
+  const appBlock=(sec, data, currency)=>{
+    if(!data||!Object.keys(data).length) return '';
+    const cur=currency||'TC';
+    const {label,color}=appColors[sec]||{label:sec,color:'var(--muted)'};
+    const fmt=v=>fmtTC(v);
+
+    // Calcular totais
+    let totalBase=0, totalEarned=0, totalReal=0, temReal=false;
+    Object.values(data).forEach(v=>{
+      totalBase+=v.base||0;
+      totalEarned+=v.earned||0;
+      if(v.saldoFinal!==undefined){ totalReal+=v.ganhoReal||0; temReal=true; }
+    });
+
+    // Linha divisora com nome centralizado
+    const divisor=`
+      <div style="display:flex;align-items:center;gap:8px;margin:14px 0 8px;">
+        <div style="flex:1;height:1px;background:${color};opacity:.5;"></div>
+        <div style="font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;
+                    color:${color};letter-spacing:.5px;white-space:nowrap;
+                    padding:2px 10px;border-radius:10px;
+                    background:rgba(0,0,0,.2);border:1px solid ${color};">${label}</div>
+        <div style="flex:1;height:1px;background:${color};opacity:.5;"></div>
+      </div>`;
+
+    // Resumo
+    const resumo=`
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+          <span style="color:var(--muted);">Saldo inicial</span>
+          <span style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--text);">${fmt(totalBase)} ${cur}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+          <span style="color:var(--muted);">Coletas estimadas</span>
+          <span style="color:var(--accent);font-family:'Rajdhani',sans-serif;font-weight:700;">+${fmt(totalEarned)} ${cur}</span>
+        </div>
+        ${temReal?`
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;">
+          <span style="color:var(--muted);">Ganho real</span>
+          <span style="color:var(--green);font-family:'Rajdhani',sans-serif;font-weight:700;">+${fmt(totalReal)} ${cur}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;">
+          <span style="color:var(--muted);">Outros ganhos</span>
+          <span style="color:${totalReal-totalEarned>=0?'var(--accent2)':'var(--red)'};font-family:'Rajdhani',sans-serif;font-weight:700;">
+            ${totalReal-totalEarned>=0?'+':''}${fmt(totalReal-totalEarned)} ${cur}
+          </span>
+        </div>`
+        :`<div style="font-size:10px;color:var(--muted);margin-top:2px;">⏳ Aguardando saldo da próxima semana...</div>`}
+      </div>`;
+
+    // Detalhes por conta
+    const detalhes=Object.entries(data).map(([acc,v])=>{
+      const temFinal=v.saldoFinal!==undefined;
+      const outrosGanhos=(v.ganhoReal||0)-(v.earned||0);
+      return `<div style="padding:7px 10px;border-bottom:1px solid var(--border);font-size:11px;">
+        <div style="font-weight:600;color:var(--text);margin-bottom:4px;">${acc}</div>
+        <div style="display:flex;justify-content:space-between;color:var(--muted);margin-bottom:1px;">
+          <span>Inicial</span><span style="font-family:'Rajdhani',sans-serif;">${fmt(v.base||0)} ${cur}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;color:var(--accent);margin-bottom:1px;">
+          <span>Coletas</span><span style="font-family:'Rajdhani',sans-serif;">+${fmt(v.earned||0)} ${cur}</span>
+        </div>
+        ${temFinal?`
+        <div style="display:flex;justify-content:space-between;color:var(--green);margin-bottom:1px;">
+          <span>Ganho real</span><span style="font-family:'Rajdhani',sans-serif;">+${fmt(v.ganhoReal||0)} ${cur}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;color:${outrosGanhos>=0?'var(--accent2)':'var(--red)'};">
+          <span>Outros</span><span style="font-family:'Rajdhani',sans-serif;">${outrosGanhos>=0?'+':''}${fmt(outrosGanhos)} ${cur}</span>
+        </div>`
+        :`<div style="color:var(--muted);font-size:9px;margin-top:2px;">⏳ Pendente</div>`}
+      </div>`;
+    }).join('');
+
+    return divisor + resumo +
+      `<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;overflow:hidden;">${detalhes}</div>`;
+  };
+
+  buildHistCarr(hist, (s)=>{
+    return appBlock('net', s.apps.net, 'TC')
+         + appBlock('tree', s.apps.tree, 'TC')
+         + appBlock('farm', s.apps.farm, 'TC')
+         + appBlock('eco', s.apps.eco, 'TCMC');
+  }, (i)=>{
+    if(!confirm('Excluir este registro de semana?')) return;
+    const h=JSON.parse(localStorage.getItem('cc_hist')||'[]');
+    h.splice(i,1); localStorage.setItem('cc_hist',JSON.stringify(h));
+    openHistorico(); showToast('Excluído!',false);
+  }, 'Nenhuma semana finalizada ainda.');
+}
+
+function renderHistorico(){
+  const hist=JSON.parse(localStorage.getItem('cc_hist')||'[]');
+  const appBlock=(icon,data)=>{
+    if(!data||!Object.keys(data).length) return '';
+    return `<div class="hist-app-title">${icon}</div>`+
+      Object.entries(data).map(([acc,v])=>
+        `<div class="hist-row"><span>${acc}</span><span class="hist-tc">${fmtTC(v.total)} <span style="color:var(--muted);font-size:10px;">(+${fmtTC(v.earned)})</span></span></div>`
+      ).join('');
+  };
+  buildHistCarr(hist, (s)=>{
+    return appBlock('📡 Network',s.apps.net)+
+           appBlock('🌳 Trees',s.apps.tree)+
+           appBlock('🌾 Farming',s.apps.farm)+
+           appBlock('🔵 Ecosystem',s.apps.eco);
+  }, (i)=>{
+    if(!confirm('Excluir este registro?')) return;
+    const h=JSON.parse(localStorage.getItem('cc_hist')||'[]');
+    h.splice(i,1); localStorage.setItem('cc_hist',JSON.stringify(h));
+    renderHistorico(); showToast('Excluído!',false);
+  }, 'Nenhuma semana finalizada ainda.');
+}
+
+// ══════════════════════════════════════════
+// NOTIF 6H
+// ══════════════════════════════════════════
+function checkDayChange(){
+  const now=new Date(), logical=appDay(now), dateKey=localDateStr(now);
+  if(now.getHours()===DAY_START&&now.getMinutes()<5&&lastNotifDate!==dateKey){
+    lastNotifDate=dateKey; localStorage.setItem('cc_notif',dateKey);
+    const b=document.getElementById('notifBanner');
+    b.classList.add('show'); setTimeout(()=>b.classList.remove('show'),8000);
+  }
+  if(logical!==currentDay&&document.getElementById('appScreen').style.display!=='none'){
+    currentDay=logical;
+    document.getElementById('dayBadge').textContent=DAY_NAMES[logical];
+    autoVermelhoDiaAnterior(); // marcar vermelho ao detectar virada de dia
+    renderTab(currentTab); updateDayBar();
+  }
+}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ══════════════════════════════════════════
+// BACKUP — EXPORTAR
+// ══════════════════════════════════════════
+function exportBackup(){
+  const hist=JSON.parse(localStorage.getItem('cc_hist')||'[]');
+  const backup={
+    version:2,
+    exportDate:new Date().toISOString(),
+    weekId:currentWeekId,
+    state:state,
+    hist:hist,
+    timeline:getEventos(),
+  };
+  const json=JSON.stringify(backup,null,2);
+  const blob=new Blob([json],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const dateStr=new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
+  const a=document.createElement('a');
+  a.href=url; a.download=`CryptoCtrl_backup_${dateStr}.json`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  showToast('✓ Backup exportado!',false);
+}
+
+// ══════════════════════════════════════════
+// BACKUP — IMPORTAR
+// ══════════════════════════════════════════
+function importBackup(input){
+  const file=input.files[0];
+  if(!file){return;}
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const backup=JSON.parse(e.target.result);
+      if(!backup.version||!backup.state){
+        alert('Arquivo inválido. Selecione um backup gerado pelo CryptoCtrl.');
+        return;
+      }
+      if(!confirm(`Restaurar backup de ${new Date(backup.exportDate).toLocaleDateString('pt-BR')}?\n\nIsso vai substituir todos os dados atuais.`)){
+        input.value=''; return;
+      }
+      // restaurar
+      state=backup.state||{};
+      currentWeekId=backup.weekId||weekId(new Date());
+      localStorage.setItem('cc_v5',JSON.stringify(state));
+      if(backup.hist) localStorage.setItem('cc_hist',JSON.stringify(backup.hist));
+      if(backup.timeline) saveEventos(backup.timeline);
+      updateWeekLabel();
+      // se estiver no app, re-renderiza
+      if(document.getElementById('appScreen').style.display!=='none'){
+        renderTab(currentTab); updateDayBar();
+      }
+      showToast('✓ Backup restaurado!',false);
+    } catch(err){
+      alert('Erro ao ler o arquivo. Verifique se é um backup válido.');
+    }
+    input.value='';
+  };
+  reader.readAsText(file);
+}
+
+// ══════════════════════════════════════════
+// WALLETS
+// ══════════════════════════════════════════
+const WALLETS_DEFAULT = ['Wallet Principal','Wallet Operacional'];
+
+function getWallets(){
+  return state['wallets_list'] || WALLETS_DEFAULT;
+}
+function getExtrato(){
+  return state['extrato'] || [];
+}
+function saveExtrato(ext){
+  state['extrato']=ext; saveState();
+}
+
+function walletSaldo(nome){
+  const ext=getExtrato();
+  let saldo=0;
+  ext.forEach(m=>{
+    if(m.status==='solicitado') return; // pendente não conta
+    const val=m.valor||0;
+    if(m.destino===nome) saldo+=val;
+    if(m.origem===nome)  saldo-=val;
+  });
+  return saldo;
+}
+
+function walletPendente(nome){
+  return getExtrato().filter(m=>m.status==='solicitado'&&m.destino===nome).reduce((s,m)=>s+m.valor,0);
+}
+
+function openWallets(){
+  window.scrollTo(0,0);
+  document.getElementById('homeScreen').style.display='none';
+  document.getElementById('appScreen').style.display='none';
+  document.getElementById('timelineScreen').style.display='none';
+  document.getElementById('walletScreen').style.display='block';
+  renderWallets();
+}
+
+let _extFiltro = 'todos';
+
+function setExtFiltro(btn){
+  _extFiltro = btn.dataset.ef;
+  document.querySelectorAll('.ext-filter-btn').forEach(b=>b.classList.toggle('active', b.dataset.ef===_extFiltro));
+  renderExtrato();
+}
+
+function tipoMovExtrato(m){
+  if(m.tipo==='app-wallet') return 'saida';
+  if(m.tipo==='wallet-app') return 'entrada';
+  return 'transfer';
+}
+
+function renderWallets(){
+  const wallets=getWallets();
+  const cards=document.getElementById('wltCards');
+  cards.innerHTML=wallets.map(w=>{
+    const sal=walletSaldo(w);
+    const pend=walletPendente(w);
+    return `<div class="wlt-card">
+      <div class="wlt-card-name">${w}</div>
+      <div class="wlt-card-bal">${fmtTC(sal)}</div>
+      <div class="wlt-card-token">TC confirmado</div>
+      ${pend>0?`<div style="font-size:10px;color:var(--accent2);margin-top:4px;">⏳ +${fmtTC(pend)} TC pendente</div>`:''}
+    </div>`;
+  }).join('');
+
+  // card total — elemento fixo
+  const totalSaldo=wallets.reduce((s,w)=>s+walletSaldo(w),0);
+  const totalPend =wallets.reduce((s,w)=>s+walletPendente(w),0);
+  let totalDiv=document.getElementById('wltTotalCard');
+  if(!totalDiv){
+    totalDiv=document.createElement('div');
+    totalDiv.id='wltTotalCard';
+    totalDiv.style.cssText='background:var(--surface);border:1.5px solid var(--accent);border-radius:12px;padding:14px 12px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;';
+    cards.parentNode.insertBefore(totalDiv, cards.nextSibling);
+  }
+  totalDiv.innerHTML=`
+    <div>
+      <div style="font-size:10px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Total Geral</div>
+      ${totalPend>0?`<div style="font-size:10px;color:var(--accent2);margin-top:3px;">⏳ +${fmtTC(totalPend)} TC pendente</div>`:''}
+    </div>
+    <div style="text-align:right;">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:var(--accent2);">${fmtTC(totalSaldo)}</div>
+      <div style="font-size:10px;color:var(--muted);">TC confirmado</div>
+    </div>`;
+
+  renderExtrato();
+}
+
+function renderExtrato(){
+  let ext=[...getExtrato()];
+
+  // aplicar filtro
+  if(_extFiltro==='saida')     ext=ext.filter(m=>m.tipo==='app-wallet');
+  else if(_extFiltro==='entrada')  ext=ext.filter(m=>m.tipo==='wallet-app');
+  else if(_extFiltro==='transfer') ext=ext.filter(m=>m.tipo==='wallet-wallet'||m.tipo==='app-app');
+  else if(_extFiltro==='pendente') ext=ext.filter(m=>m.status==='solicitado');
+
+  const list=document.getElementById('extratoList');
+  if(!ext.length){
+    list.innerHTML='<div class="empty-extrato">Nenhuma movimentação encontrada.</div>';
+    return;
+  }
+
+  ext.sort((a,b)=>{
+    const da=new Date((a.data||'2000-01-01')+'T'+(a.hora||'00:00'));
+    const db=new Date((b.data||'2000-01-01')+'T'+(b.hora||'00:00'));
+    return db-da;
+  });
+
+  const fmtDH=(d,h)=>{
+    if(!d) return '—';
+    return new Date(d+'T12:00:00').toLocaleDateString('pt-BR')+(h?' '+h:'');
+  };
+
+  list.innerHTML=ext.map(m=>{
+    const tpExt = tipoMovExtrato(m);
+    const icon  = m.tipo==='wallet-wallet'?'🔄': m.tipo==='wallet-app'?'📲': m.tipo==='app-wallet'?'💸':'↔️';
+    const sinal = tpExt==='entrada'?'+': tpExt==='saida'?'-':'';
+    const isPend= m.status==='solicitado';
+    const statusBadge = isPend
+      ? `<span style="font-size:9px;background:rgba(232,196,74,.2);color:var(--accent2);border:1px solid rgba(232,196,74,.4);border-radius:4px;padding:1px 6px;">⏳ Solicitado</span>`
+      : `<span style="font-size:9px;background:rgba(63,185,80,.15);color:var(--green);border:1px solid rgba(63,185,80,.3);border-radius:4px;padding:1px 6px;">✓ Concluído</span>`;
+    const concluirBtn = isPend
+      ? `<button class="mov-edit-btn" style="color:var(--green)" onclick="concluirMov('${m.id}')">✓ Concluído</button>`
+      : '';
+
+    return `<div class="mov-row" style="${isPend?'border-color:rgba(232,196,74,.3);':''}">
+      <div class="mov-row-top">
+        <div style="font-size:16px;flex:none;margin-right:6px;">${icon}</div>
+        <div class="mov-rota" style="flex:1;min-width:0;">
+          <div style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            ${m.origem} → ${m.destino}
+          </div>
+          <div style="margin-top:3px;">${statusBadge}</div>
+        </div>
+        <div class="mov-val-wrap">
+          <div class="mov-val ${tpExt}" style="${isPend?'opacity:.6':''}">${sinal}${fmtTC(m.valor)} TC</div>
+        </div>
+      </div>
+      <div class="mov-datas">
+        <span>📅 <strong>Solic.:</strong> ${fmtDH(m.data, m.hora)}</span>
+        ${m.dataConclusao?`<span>✅ <strong>Conc.:</strong> ${fmtDH(m.dataConclusao, m.horaConclusao)}</span>`:''}
+        ${m.hash?`<span>#️⃣ <strong>Hash:</strong> ${m.hash}</span>`:''}
+        ${m.obs?`<span>📝 ${m.obs}</span>`:''}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:6px;justify-content:center;">
+        ${concluirBtn}
+        <button class="mov-edit-btn" onclick="editarMov('${m.id}')">✏️ Editar</button>
+        <button class="mov-del-btn"  onclick="excluirMov('${m.id}')">🗑️ Excluir</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── MODAL MOVIMENTAÇÃO ──
+let _movEditId = null;
+let _movStatusAtual = 'solicitado';
+
+// Lista completa de origens/destinos
+function buildMovOpcoes(){
+  const groups = {};
+  const add = (g, v, l) => { if(!groups[g]) groups[g]=[]; groups[g].push({value:v, label:l}); };
+  // Wallets externas com endereço
+  add('Wallets', 'Wallet Principal',   'Wallet Principal\n0xD37A1f1fF164370D245d2Cf2BD54d1C575f0a7c6');
+  add('Wallets', 'Wallet Operacional', 'Wallet Operacional\n0x300be5494Ca50284bb6Ec949e6c9e73282dCa504');
+  // TTCoin Network
+  NET_ACCOUNTS.forEach(acc=>add('TTCoin Network',`TTCoin Network · ${acc.name}`,`TTCoin Network · ${acc.name}`));
+  // TTCoin Trees
+  TREE_ACCOUNTS.forEach(acc=>add('TTCoin Trees',`TTCoin Trees · ${acc.name}`,`TTCoin Trees · ${acc.name}`));
+  // Farming TC — mescla com Wallet Interna da conta
+  FARM_ACCOUNTS.forEach(acc=>{
+    const info = CONTAS_INFO.find(c=>c.dispositivo===acc.name);
+    const fa   = info?.apps?.find(a=>a.app==='Farming TC');
+    const addr = fa?.walletInterna && fa.walletInterna!=='0x...' && fa.walletInterna!=='0x' ? fa.walletInterna : null;
+    const label= `Farming TC · ${acc.name}${addr ? '\n'+addr : ''}`;
+    add('Farming TC', `Farming TC · ${acc.name}`, label);
+  });
+  // Ecosystem
+  ECO_ACCOUNTS.forEach(acc=>add('Ecosystem',`Ecosystem · ${acc.name}`,`Ecosystem · ${acc.name}`));
+  return groups;
+}
+
+// ── CUSTOM SELECT ──
+let _cselValues = {origem:'', destino:''};
+
+function buildCselDropdown(dropId, trigId, labelId, hiddenId, selectedVal){
+  const groups = buildMovOpcoes();
+  const drop = document.getElementById(dropId);
+  const trig = document.getElementById(trigId);
+  if(!drop||!trig) return;
+
+  // posicionar dropdown sob o trigger
+  const rect = trig.getBoundingClientRect();
+  drop.style.top    = (rect.bottom + window.scrollY + 4)+'px';
+  drop.style.left   = rect.left+'px';
+  drop.style.width  = rect.width+'px';
+
+  drop.innerHTML = '';
+  // opção vazia
+  const emptyOpt = document.createElement('div');
+  emptyOpt.className = 'csel-option' + (!selectedVal?' selected':'');
+  emptyOpt.innerHTML = '<div class="csel-opt-name" style="color:var(--muted);">— Selecione —</div>';
+  emptyOpt.onclick = () => setCsel(trigId, labelId, hiddenId, dropId, '', '— Selecione —', '');
+  drop.appendChild(emptyOpt);
+
+  Object.entries(groups).forEach(([g, items])=>{
+    const gl = document.createElement('div');
+    gl.className = 'csel-group-label'; gl.textContent = g;
+    drop.appendChild(gl);
+    items.forEach(o=>{
+      const parts = o.label.split('\n');
+      const name  = parts[0];
+      const addr  = parts[1] || '';
+      const opt   = document.createElement('div');
+      opt.className = 'csel-option' + (o.value===selectedVal?' selected':'');
+      opt.innerHTML = `<div class="csel-opt-name">${name}</div>${addr?`<div class="csel-opt-addr">${addr}</div>`:''}`;
+      opt.onclick = () => setCsel(trigId, labelId, hiddenId, dropId, o.value, name, addr);
+      drop.appendChild(opt);
+    });
+  });
+}
+
+function setCsel(trigId, labelId, hiddenId, dropId, value, name, addr){
+  document.getElementById(hiddenId).value = value;
+  const lbl = document.getElementById(labelId);
+  lbl.innerHTML = value
+    ? `${name}${addr?`<span class="csel-addr">${addr}</span>`:''}`
+    : '— Selecione —';
+  document.getElementById(trigId).classList.remove('open');
+  document.getElementById(dropId).classList.remove('open');
+  if(hiddenId==='movOrigem') _cselValues.origem=value;
+  else _cselValues.destino=value;
+}
+
+function toggleCsel(which){
+  const map = {
+    origem: {trigId:'cselOrigemTrigger', dropId:'cselOrigemDropdown', labelId:'cselOrigemLabel', hiddenId:'movOrigem'},
+    destino:{trigId:'cselDestinoTrigger',dropId:'cselDestinoDropdown',labelId:'cselDestinoLabel',hiddenId:'movDestino'},
+  };
+  const other = which==='origem'?'destino':'origem';
+  // fechar o outro
+  document.getElementById(map[other].trigId).classList.remove('open');
+  document.getElementById(map[other].dropId).classList.remove('open');
+  const {trigId,dropId,labelId,hiddenId} = map[which];
+  const isOpen = document.getElementById(dropId).classList.contains('open');
+  if(isOpen){
+    document.getElementById(trigId).classList.remove('open');
+    document.getElementById(dropId).classList.remove('open');
+  } else {
+    document.getElementById(trigId).classList.add('open');
+    buildCselDropdown(dropId, trigId, labelId, hiddenId, document.getElementById(hiddenId).value);
+    document.getElementById(dropId).classList.add('open');
+  }
+}
+
+// fechar ao clicar fora
+document.addEventListener('click', e=>{
+  ['Origem','Destino'].forEach(w=>{
+    const trig=document.getElementById(`csel${w}Trigger`);
+    const drop=document.getElementById(`csel${w}Dropdown`);
+    if(trig&&drop&&!trig.contains(e.target)&&!drop.contains(e.target)){
+      trig.classList.remove('open'); drop.classList.remove('open');
+    }
+  });
+});
+
+function populateMovSelects(origemVal, destinoVal){
+  // reset custom selects
+  ['Origem','Destino'].forEach(w=>{
+    const val  = w==='Origem'?origemVal:destinoVal;
+    const hidId= `mov${w}`;
+    const lblId= `csel${w}Label`;
+    const trigId=`csel${w}Trigger`;
+    document.getElementById(hidId).value = val||'';
+    if(val){
+      // encontrar label
+      const groups=buildMovOpcoes();
+      let name='',addr='';
+      Object.values(groups).flat().forEach(o=>{
+        if(o.value===val){ const p=o.label.split('\n'); name=p[0]; addr=p[1]||''; }
+      });
+      const lbl=document.getElementById(lblId);
+      if(lbl) lbl.innerHTML=`${name}${addr?`<span class="csel-addr">${addr}</span>`:''}`;
+    } else {
+      const lbl=document.getElementById(lblId);
+      if(lbl) lbl.textContent='— Selecione —';
+    }
+    const trig=document.getElementById(trigId);
+    if(trig) trig.classList.remove('open');
+  });
+}
+
+function populateEvConta(selectedVal){
+  const sel = document.getElementById('evConta');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">— Nenhuma —</option>';
+  // Dispositivos
+  const dispositivos=[...new Set([...NET_ACCOUNTS,...TREE_ACCOUNTS,...FARM_ACCOUNTS,...ECO_ACCOUNTS].map(a=>a.name))];
+  const ogDev=document.createElement('optgroup'); ogDev.label='Dispositivos';
+  dispositivos.forEach(d=>{
+    const op=document.createElement('option'); op.value=d; op.textContent=d;
+    if(d===selectedVal) op.selected=true; ogDev.appendChild(op);
+  });
+  sel.appendChild(ogDev);
+  // Apps + dispositivos
+  [{label:'TTCoin Network',accs:NET_ACCOUNTS},{label:'TTCoin Trees',accs:TREE_ACCOUNTS},
+   {label:'Farming TC',accs:FARM_ACCOUNTS},{label:'Ecosystem',accs:ECO_ACCOUNTS}]
+  .forEach(a=>{
+    const og=document.createElement('optgroup'); og.label=a.label;
+    a.accs.forEach(acc=>{
+      const v=`${a.label} · ${acc.name}`;
+      const op=document.createElement('option'); op.value=v; op.textContent=v;
+      if(v===selectedVal) op.selected=true; og.appendChild(op);
+    });
+    sel.appendChild(og);
+  });
+}
+
+function openMovModal(editId){
+  _movEditId = editId||null;
+  _movStatusAtual = 'solicitado';
+  const now = new Date();
+  populateMovSelects('','');
+  document.getElementById('movValor').value='';
+  document.getElementById('movData').value=localDateStr(now);
+  document.getElementById('movHora').value=now.toTimeString().slice(0,5);
+  document.getElementById('movObs').value='';
+  document.getElementById('movHash').value='';
+  document.getElementById('movDataConc').value='';
+  document.getElementById('movHoraConc').value='';
+  document.getElementById('movConclusaoWrap').style.display='none';
+  document.querySelectorAll('[data-status]').forEach(b=>b.classList.toggle('active',b.dataset.status==='solicitado'));
+
+  if(editId){
+    const m=getExtrato().find(e=>e.id===editId);
+    if(m){
+      _movStatusAtual=m.status||'solicitado';
+      populateMovSelects(m.origem,m.destino);
+      document.getElementById('movValor').value=m.valor?fmtTC(m.valor):'';
+      document.getElementById('movData').value=m.data||'';
+      document.getElementById('movHora').value=m.hora||'';
+      document.getElementById('movObs').value=m.obs||'';
+      document.getElementById('movHash').value=m.hash||'';
+      if(_movStatusAtual==='concluido'){
+        document.getElementById('movConclusaoWrap').style.display='block';
+        document.getElementById('movDataConc').value=m.dataConclusao||'';
+        document.getElementById('movHoraConc').value=m.horaConclusao||'';
+      }
+      document.querySelectorAll('[data-status]').forEach(b=>b.classList.toggle('active',b.dataset.status===_movStatusAtual));
+    }
+    document.getElementById('movModalTitle').textContent='✏️ Editar Movimentação';
+  } else {
+    document.getElementById('movModalTitle').textContent='＋ Nova Movimentação';
+  }
+  openModal('movModal');
+}
+
+function selectStatus(btn){
+  document.querySelectorAll('[data-status]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  _movStatusAtual=btn.dataset.status;
+  const wrap=document.getElementById('movConclusaoWrap');
+  if(wrap) wrap.style.display=_movStatusAtual==='concluido'?'block':'none';
+}
+
+function confirmarMovimentacao(){
+  const origem =document.getElementById('movOrigem').value;
+  const destino=document.getElementById('movDestino').value;
+  const valor  =parseFmt(document.getElementById('movValor').value);
+  const data   =document.getElementById('movData').value;
+  const hora   =document.getElementById('movHora').value;
+  const obs    =document.getElementById('movObs').value.trim();
+  const hash   =document.getElementById('movHash').value.trim();
+  const dataConc=_movStatusAtual==='concluido'?document.getElementById('movDataConc').value:null;
+  const horaConc=_movStatusAtual==='concluido'?document.getElementById('movHoraConc').value:null;
+  if(!valor||valor<=0){alert('Informe um valor válido.');return;}
+  if(!origem||!destino){alert('Selecione origem e destino.');return;}
+  if(origem===destino){alert('Origem e destino não podem ser iguais.');return;}
+  const isWlt=v=>v.startsWith('Wallet');
+  const tipo=isWlt(origem)&&isWlt(destino)?'wallet-wallet':isWlt(origem)?'wallet-app':isWlt(destino)?'app-wallet':'app-app';
+  const entry={id:_movEditId||Date.now().toString(),tipo,origem,destino,valor,data,hora:hora||null,
+    dataConclusao:dataConc||null,horaConclusao:horaConc||null,hash:hash||null,obs,status:_movStatusAtual};
+  const ext=getExtrato();
+  if(_movEditId){const idx=ext.findIndex(e=>e.id===_movEditId);if(idx>=0)ext[idx]=entry;}
+  else ext.push(entry);
+  saveExtrato(ext);
+  closeModal('movModal');
+  showToast('✓ Movimentação salva!',false);
+  renderWallets();
+}
+
+function selectSqStatus(btn){
+  document.querySelectorAll('[data-sq-status]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  _sqStatus=btn.dataset.sqStatus;
+  const wrap=document.getElementById('saqueDataConclusaoWrap');
+  if(wrap) wrap.style.display=_sqStatus==='concluido'?'block':'none';
+}
+
+let _concluirMovId = null;
+
+function concluirMov(id){
+  _concluirMovId = id;
+  const now = new Date();
+  document.getElementById('concluirData').value = localDateStr(now);
+  document.getElementById('concluirHora').value = now.toTimeString().slice(0,5);
+  document.getElementById('concluirHash').value = '';
+  openModal('concluirModal');
+}
+
+function confirmarConclusao(){
+  const id       = _concluirMovId;
+  const dataConc = document.getElementById('concluirData').value;
+  const horaConc = document.getElementById('concluirHora').value;
+  const hash     = document.getElementById('concluirHash').value.trim();
+
+  if(!dataConc){ alert('Informe a data de conclusão.'); return; }
+
+  // 1. Atualizar extrato
+  const ext = getExtrato();
+  const m   = ext.find(e=>e.id===id);
+  if(!m) return;
+  m.status        = 'concluido';
+  m.dataConclusao = dataConc;
+  m.horaConclusao = horaConc || null;
+  if(hash) m.hash = hash;
+  saveExtrato(ext);
+
+  // 2. Atualizar evento auto-gerado correspondente na Timeline
+  const evs = getEventos();
+  // match por movId (vínculo direto) ou por conta+data como fallback
+  const evIdx = evs.findIndex(e =>
+    e.autoGerado && e.tipo === 'saque' && (
+      e.movId === id ||
+      (e.conta === m.origem.split(' · ')[1] && e.data === m.data)
+    )
+  );
+  if(evIdx >= 0){
+    const dataFmt = new Date(dataConc+'T12:00:00').toLocaleDateString('pt-BR');
+    const horaFmt = horaConc ? ` ${horaConc}` : '';
+    evs[evIdx].desc = evs[evIdx].desc.replace(/ · Conc\..*$/, '')
+      + ` · Conc. em ${dataFmt}${horaFmt}`;
+    if(hash) evs[evIdx].desc += ` · Hash: ${hash.slice(0,12)}...`;
+    evs[evIdx].status = 'concluido';
+    evs[evIdx].movId  = id; // garantir vínculo
+    saveEventos(evs);
+  }
+
+  closeModal('concluirModal');
+  showToast('✓ Saque concluído!', false);
+  renderWallets();
+}
+
+function excluirMov(id){
+  if(!confirm('Excluir esta movimentação?')) return;
+  const ext=getExtrato().filter(e=>e.id!==id);
+  saveExtrato(ext);
+  showToast('Excluído!',false);
+  renderWallets();
+}
+function editarMov(id){
+  openMovModal(id);
+}
+
+// ── SAQUE COM DESTINO WALLET ──
+document.addEventListener('DOMContentLoaded',()=>{
+  const sel=document.getElementById('saqueDestino');
+  if(sel) sel.addEventListener('change',()=>{
+    const v=sel.value;
+    document.getElementById('saqueDestinoAppWrap').style.display=v==='app'?'block':'none';
+  });
+});
+
+// ══════════════════════════════════════════
+// TIMELINE
+// ══════════════════════════════════════════
+const TL_TIPOS = [
+  {id:'todos',       label:'Todos',        badge:'',                  cor:''},
+  {id:'conquista',   label:'🏆 Conquista', badge:'badge-conquista',   cor:'#fbbf24'},
+  {id:'saque',       label:'💸 Saque',     badge:'badge-saque',       cor:'var(--green)'},
+  {id:'migracao',    label:'🔄 Migração',  badge:'badge-migracao',    cor:'var(--blue)'},
+  {id:'investimento',label:'💰 Investimento',badge:'badge-investimento',cor:'var(--accent)'},
+  {id:'wallet',      label:'👛 Wallet',    badge:'badge-wallet',      cor:'var(--tcmc)'},
+  {id:'conta',       label:'👤 Conta',     badge:'badge-conta',       cor:'var(--accent2)'},
+  {id:'outro',       label:'📌 Outro',     badge:'badge-outro',       cor:'var(--purple)'},
+];
+
+// Dados das contas do PDF
+const CONTAS_INFO = [
+  {dispositivo:'Celular Meu', apelido:'Conta Principal', apps:[
+    {app:'TTCoin Network', email:'lanhouse.x1@gmail.com', dataReg:null,
+     saques:[{valor:3050,data:'2026-05-01',dest:'0xF526...'},{valor:29130,data:'2026-04-01',dest:'0xF526...'}]},
+    {app:'TTCoin Trees',   email:'mouse.rsg@gmail.com',  dataReg:'2023-12-04',
+     saques:[{valor:38637,data:'2026-03-23',dest:'0x300b...'}]},
+    {app:'Farming TC',     email:'lanhouse.x1@gmail.com',dataReg:'2026-02-10',
+     gansos:[{tipo:'Registro',validade:'30 dias',obs:'Ganho pelo registro'},{tipo:'Caça aos Ovos',data:'2026-05-29',validade:'365 dias',obs:'Ganho em 29/05/26'}],
+     walletInterna:'0xd5B346E6a462f493388f0660331Db231FC2767ED'},
+    {app:'TTCoin Ecosystem',email:'lanhouse.x1@gmail.com',dataReg:null},
+  ]},
+  {dispositivo:'Celular Brenda', apelido:'', apps:[
+    {app:'TTCoin Network', email:'recuperacao.srmouse@gmail.com', dataReg:null,
+     saques:[{valor:3660,data:'2026-05-02',dest:'0x300b...'},{valor:3480,data:'2026-05-23',dest:'0x300b...'}]},
+    {app:'TTCoin Trees',   email:'recuperacao.srmouse@gmail.com',dataReg:'2026-03-01'},
+    {app:'Farming TC',     email:'recuperacao.srmouse@gmail.com',dataReg:'2026-02-10',
+     depositos:[{valor:29100,data:'2026-05-24',hora:'11:27'}],
+     saques:[{valor:50251.84,data:'2026-05-25',hora:'17:17'}],
+     gansos:[{tipo:'Registro',validade:'30 dias',obs:'Ganho pelo registro'},{tipo:'Caça aos Ovos',validade:'365 dias',obs:'Ainda não conquistado'}],
+     walletInterna:'0x3F374054E54e067cce650a760fe51D47bFecB1Dd'},
+  ]},
+  {dispositivo:'Tablet Brenda', apelido:'', apps:[
+    {app:'TTCoin Network', email:'josefm.2012@gmail.com', dataReg:null,
+     saques:[{valor:3840,data:'2026-05-04',dest:'0x300b...'}]},
+    {app:'TTCoin Trees',   email:'brendageffer6@gmail.com',dataReg:'2026-02-03'},
+    {app:'Farming TC',     email:'brendageffer@gmail.com', dataReg:'2026-02-11',
+     depositos:[{valor:3050,data:'2026-05-02',hora:'06:04'},{valor:29130,data:'2026-04-02',hora:'04:52'}],
+     saques:[{valor:51557.05,data:'2026-05-03',hora:'20:31'}],
+     gansos:[{tipo:'Registro',validade:'30 dias',obs:'Ganho pelo registro'},{tipo:'Caça aos Ovos',validade:'365 dias',obs:'Ainda não conquistado'}],
+     walletInterna:'0xF5269151564aC059450864ca74bf11264A18f18C'},
+    {app:'TTCoin Ecosystem',email:'brendageffer6@gmail.com',dataReg:null},
+  ]},
+  {dispositivo:'Celular Mãe', apelido:'', apps:[
+    {app:'TTCoin Network', email:'isg.irani@gmail.com', dataReg:null},
+    {app:'TTCoin Trees',   email:'isg.irani@gmail.com', dataReg:'2026-02-17'},
+    {app:'Farming TC',     email:'isg.irani@gmail.com', dataReg:'2026-02-07',
+     depositos:[{valor:45650,data:'2026-03-27',hora:'17:46'}],
+     saques:[{valor:50028.47,data:'2026-03-28',hora:'21:53'}],
+     gansos:[{tipo:'Registro',validade:'30 dias',obs:'Ganho pelo registro'},{tipo:'Caça aos Ovos',validade:'365 dias',obs:'Ainda não conquistado'}],
+     walletInterna:'0xa943d373f2F996e1651C4aFDC4F6B922c8EbD2D4'},
+    {app:'TTCoin Ecosystem',email:'isg.irani@gmail.com',dataReg:null},
+  ]},
+  {dispositivo:'Note Nanda Google', apelido:'', apps:[
+    {app:'TTCoin Network', email:'nutrifernandageffer@gmail.com', dataReg:null},
+    {app:'Farming TC',     email:'nutrifernandageffer@gmail.com',dataReg:'2026-04-23',
+     gansos:[{tipo:'Registro',validade:'30 dias',obs:'Ganho pelo registro'},{tipo:'Caça aos Ovos',data:'2026-05-30',validade:'365 dias',obs:'Ganho em 30/05/26'}],
+     walletInterna:'0x...'},
+  ]},
+  {dispositivo:'Note Meu LDPlayer', apelido:'', apps:[
+    {app:'TTCoin Network', email:'bibliohqs.05@gmail.com', dataReg:null},
+  ]},
+  {dispositivo:'Note Nanda LDPlayer', apelido:'', apps:[
+    {app:'TTCoin Network', email:'brendageffer4@gmail.com', dataReg:null},
+  ]},
+];
+
+let _tlFiltro = 'todos';
+let _evEditId = null;
+
+function getEventos(){ return state['timeline'] || []; }
+function saveEventos(ev){ state['timeline']=ev; saveState(); }
+
+function openTimeline(){
+  window.scrollTo(0,0);
+  document.getElementById('homeScreen').style.display='none';
+  document.getElementById('appScreen').style.display='none';
+  document.getElementById('walletScreen').style.display='none';
+  document.getElementById('timelineScreen').style.display='block';
+  buildTlFilters();
+  renderTimeline();
+  renderContas();
+}
+
+function buildTlFilters(){
+  const bar=document.getElementById('tlFilters');
+  bar.innerHTML=TL_TIPOS.map(t=>
+    `<button class="tl-filter-btn${t.id===_tlFiltro?' active':''}" onclick="setTlFiltro('${t.id}')">${t.label}</button>`
+  ).join('');
+}
+
+function setTlFiltro(id){
+  _tlFiltro=id;
+  buildTlFilters();
+  renderTimeline();
+}
+
+function movToTlTipo(m){
+  // app→wallet = saque/saída
+  if(m.tipo==='app-wallet') return 'saque';
+  // wallet→app = investimento/entrada
+  if(m.tipo==='wallet-app') return 'investimento';
+  // wallet→wallet ou app→app = migração/transferência
+  return 'migracao';
+}
+
+function renderTimeline(){
+  const busca=(document.getElementById('tlSearch')?.value||'').toLowerCase();
+
+  // Converter movimentações em itens de timeline
+  const movItems = getExtrato().map(m=>({
+    _isMov: true,
+    id: 'mov_'+m.id,
+    movId: m.id,
+    data: m.data||'2000-01-01',
+    hora: m.hora||'00:00',
+    tipo: movToTlTipo(m),
+    titulo: `${m.origem} → ${m.destino}`,
+    desc: [
+      m.obs||'',
+      m.hora?`Solic.: ${m.data?new Date(m.data+'T12:00:00').toLocaleDateString('pt-BR'):''} ${m.hora}`:'',
+      m.dataConclusao?`Conc.: ${new Date(m.dataConclusao+'T12:00:00').toLocaleDateString('pt-BR')}${m.horaConclusao?' '+m.horaConclusao:''}`: '',
+      m.hash?`Hash: ${m.hash}`:'',
+      m.status==='solicitado'?'⏳ Pendente':'',
+    ].filter(Boolean).join(' · '),
+    conta: '',
+    valor: m.valor,
+    status: m.status,
+  }));
+
+  // Juntar eventos manuais + movimentações
+  let todos = [...getEventos(), ...movItems];
+
+  // Aplicar filtro
+  if(_tlFiltro==='wallet'){
+    // só movimentações
+    todos = todos.filter(e=>e._isMov);
+  } else if(_tlFiltro==='saque'){
+    // eventos tipo saque + movimentações app→wallet
+    todos = todos.filter(e=>e.tipo==='saque');
+  } else if(_tlFiltro==='migracao'){
+    // eventos migração + movimentações wallet→wallet e app→app
+    todos = todos.filter(e=>e.tipo==='migracao');
+  } else if(_tlFiltro==='investimento'){
+    // eventos investimento + movimentações wallet→app
+    todos = todos.filter(e=>e.tipo==='investimento');
+  } else if(_tlFiltro!=='todos'){
+    todos = todos.filter(e=>e.tipo===_tlFiltro);
+  }
+
+  // Busca
+  if(busca) todos=todos.filter(e=>
+    (e.titulo||'').toLowerCase().includes(busca)||
+    (e.desc||'').toLowerCase().includes(busca)||
+    (e.conta||'').toLowerCase().includes(busca)
+  );
+
+  // Ordenar por data+hora desc
+  todos.sort((a,b)=>{
+    const da=new Date((a.data||'2000-01-01')+'T'+(a.hora||'12:00'));
+    const db=new Date((b.data||'2000-01-01')+'T'+(b.hora||'12:00'));
+    return db-da;
+  });
+
+  const list=document.getElementById('tlList');
+  if(!todos.length){
+    list.innerHTML=`<div class="tl-empty">${busca||_tlFiltro!=='todos'?'Nenhum item encontrado.':'Nenhum evento registrado ainda.<br><br>Toque em ＋ Evento para começar.'}</div>`;
+    return;
+  }
+
+  // Agrupar por mês/ano
+  const grupos={};
+  todos.forEach(e=>{
+    const d=new Date((e.data||'2000-01-01')+'T12:00:00');
+    const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    if(!grupos[k]) grupos[k]=[];
+    grupos[k].push(e);
+  });
+
+  const nomesMes=['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+  list.innerHTML=Object.entries(grupos).sort((a,b)=>b[0].localeCompare(a[0])).map(([k,gevs])=>{
+    const [ano,mes]=k.split('-');
+    const header=`<div style="font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;color:var(--muted);margin:12px 0 6px;letter-spacing:1px;">${nomesMes[+mes].toUpperCase()} ${ano}</div>`;
+    const items=gevs.map(e=>{
+      const tipoInfo=TL_TIPOS.find(t=>t.id===e.tipo)||TL_TIPOS[TL_TIPOS.length-1];
+      const dataFmt=e.data?new Date(e.data+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+      const horaFmt=e.hora?` ${e.hora}`:'';
+      const pendBadge=e.status==='solicitado'?`<span style="font-size:9px;background:rgba(232,196,74,.2);color:var(--accent2);border:1px solid rgba(232,196,74,.3);border-radius:4px;padding:1px 5px;margin-left:4px;">⏳ Pendente</span>`:'';
+
+      if(e._isMov){
+        // Card de movimentação
+        return `<div class="tl-item tipo-${e.tipo}">
+          <div class="tl-card">
+            <div class="tl-card-top">
+              <div class="tl-titulo" style="font-size:11px;">${e.titulo}${pendBadge}</div>
+              <span class="tl-badge ${tipoInfo.badge}">${tipoInfo.label}</span>
+            </div>
+            <div class="tl-data">${dataFmt}${horaFmt}</div>
+            ${e.desc?`<div class="tl-desc">${e.desc}</div>`:''}
+            ${e.valor?`<div class="tl-meta"><div class="tl-meta-item">💰 <strong>${fmtTC(e.valor)} TC</strong></div></div>`:''}
+            <div class="tl-actions">
+              <button class="tl-edit-btn" onclick="editarMov('${e.movId}')">✏️ Editar</button>
+              <button class="tl-del-btn"  onclick="excluirMovTl('${e.movId}')">🗑️ Excluir</button>
+            </div>
+          </div>
+        </div>`;
+      } else {
+        // Card de evento manual
+        return `<div class="tl-item tipo-${e.tipo}">
+          <div class="tl-card">
+            <div class="tl-card-top">
+              <div class="tl-titulo">${e.titulo||'Sem título'}</div>
+              <span class="tl-badge ${tipoInfo.badge}">${tipoInfo.label}</span>
+            </div>
+            <div class="tl-data">${dataFmt}</div>
+            ${e.desc?`<div class="tl-desc">${e.desc}</div>`:''}
+            <div class="tl-meta">
+              ${e.conta?`<div class="tl-meta-item">👤 <strong>${e.conta}</strong></div>`:''}
+              ${e.valor?`<div class="tl-meta-item">💰 <strong>${fmtTC(e.valor)} TC</strong></div>`:''}
+            </div>
+            <div class="tl-actions">
+              ${!e.autoGerado?`<button class="tl-edit-btn" onclick="editarEvento('${e.id}')">✏️ Editar</button>`:''}
+              <button class="tl-del-btn" onclick="excluirEvento('${e.id}')">🗑️ Excluir</button>
+            </div>
+          </div>
+        </div>`;
+      }
+    }).join('');
+    return `<div class="tl-list">${header}${items}</div>`;
+  }).join('');
+}
+
+function excluirMovTl(movId){
+  if(!confirm('Excluir esta movimentação?')) return;
+  saveExtrato(getExtrato().filter(e=>e.id!==movId));
+  showToast('Excluído!',false);
+  renderTimeline();
+  renderWallets();
+}
+
+function renderContas(){
+  const list=document.getElementById('contasList');
+  list.innerHTML=CONTAS_INFO.map(c=>{
+    const appsHTML=c.apps.map(a=>{
+      const gansoHTML=a.gansos?a.gansos.map(g=>
+        `<div style="font-size:9px;color:#fbbf24;margin-top:2px;">🪿 ${g.tipo}${g.data?' ('+new Date(g.data+'T12:00:00').toLocaleDateString('pt-BR')+')':''} · ${g.validade}</div>`
+      ).join(''):'';
+      const walletHTML=a.walletInterna?`<div style="font-size:9px;color:var(--tcmc);margin-top:2px;">🔑 ${a.walletInterna}</div>`:'';
+      return `<div style="padding:4px 0;border-bottom:1px solid var(--border);">
+        <div style="font-size:11px;font-weight:600;color:var(--accent2);">${a.app}</div>
+        <div style="font-size:9px;color:var(--muted);">${a.email}</div>
+        ${a.dataReg?`<div style="font-size:9px;color:var(--blue);">Reg: ${new Date(a.dataReg+'T12:00:00').toLocaleDateString('pt-BR')}</div>`:''}
+        ${gansoHTML}${walletHTML}
+      </div>`;
+    }).join('');
+    return `<div class="conta-card">
+      <div class="conta-card-name">${c.dispositivo}${c.apelido?' — '+c.apelido:''}</div>
+      ${appsHTML}
+    </div>`;
+  }).join('');
+}
+
+// ── MODAL EVENTO ──
+function openEvModal(editId){
+  _evEditId=editId||null;
+  if(editId){
+    const ev=getEventos().find(e=>e.id===editId);
+    if(ev){
+      document.getElementById('evData').value=ev.data||'';
+      document.getElementById('evTipo').value=ev.tipo||'outro';
+      document.getElementById('evTitulo').value=ev.titulo||'';
+      document.getElementById('evDesc').value=ev.desc||'';
+      populateEvConta(ev.conta||'');
+      document.getElementById('evValor').value=ev.valor?fmtTC(ev.valor):'';
+    }
+    document.getElementById('evModalTitle').textContent='✏️ Editar Evento';
+  } else {
+    document.getElementById('evData').value=localDateStr();
+    document.getElementById('evTipo').value='conquista';
+    document.getElementById('evTitulo').value='';
+    document.getElementById('evDesc').value='';
+    populateEvConta('');
+    document.getElementById('evValor').value='';
+    document.getElementById('evModalTitle').textContent='＋ Novo Evento';
+  }
+  openModal('evModal');
+}
+
+function confirmarEvento(){
+  const data   =document.getElementById('evData').value;
+  const tipo   =document.getElementById('evTipo').value;
+  const titulo =document.getElementById('evTitulo').value.trim();
+  const desc   =document.getElementById('evDesc').value.trim();
+  const conta  =document.getElementById('evConta').value;
+  const valor  =parseFmt(document.getElementById('evValor').value)||0;
+  if(!titulo){alert('Informe um título para o evento.');return;}
+  if(!data){alert('Informe a data do evento.');return;}
+  const evs=getEventos();
+  if(_evEditId){
+    const idx=evs.findIndex(e=>e.id===_evEditId);
+    if(idx>=0) evs[idx]={...evs[idx],data,tipo,titulo,desc,conta,valor};
+  } else {
+    evs.push({id:Date.now().toString(),data,tipo,titulo,desc,conta,valor});
+  }
+  saveEventos(evs);
+  closeModal('evModal');
+  showToast('✓ Evento salvo!',false);
+  renderTimeline();
+}
+
+function editarEvento(id){ openEvModal(id); }
+function excluirEvento(id){
+  if(!confirm('Excluir este evento?')) return;
+  saveEventos(getEventos().filter(e=>e.id!==id));
+  showToast('Excluído!',false);
+  renderTimeline();
+}
+
+// ══════════════════════════════════════════
+// AUTO VERMELHO — marca vazios do dia anterior
+// ══════════════════════════════════════════
+function autoVermelhoDiaAnterior(){
+  const now = new Date();
+  // Data lógica LOCAL: se antes das 6h, ainda é o dia anterior
+  const dataLogica = new Date(now);
+  if(now.getHours() < DAY_START) dataLogica.setDate(dataLogica.getDate() - 1);
+  // Usar data local (não toISOString que é UTC)
+  const ano  = dataLogica.getFullYear();
+  const mes  = String(dataLogica.getMonth()+1).padStart(2,'0');
+  const dia  = String(dataLogica.getDate()).padStart(2,'0');
+  const flagKey = `${ano}-${mes}-${dia}`;
+
+  const jaRodou = localStorage.getItem('cc_autovm');
+  if(jaRodou === flagKey) return; // já rodou neste dia lógico
+
+  const hoje2  = appDay();
+  const diaAnt = (hoje2 + 6) % 7;
+  const widAnt = hoje2 === 0 ? weekIdAnterior() : currentWeekId;
+
+  let changed = false;
+
+  NET_ACCOUNTS.forEach(a=>{
+    for(let s=0;s<4;s++){
+      const k=sk('net',widAnt,diaAnt,a.name,s);
+      if((state[k]||0)===0){ state[k]=2; changed=true; }
+    }
+  });
+  TREE_ACCOUNTS.forEach(a=>{
+    for(let s=0;s<2;s++){
+      const k=sk('tree',widAnt,diaAnt,a.name,s);
+      if((state[k]||0)===0){ state[k]=2; changed=true; }
+    }
+  });
+  const sl=FARM_SLOTS[diaAnt];
+  FARM_ACCOUNTS.forEach(a=>{
+    if(getGanso(a.name)){
+      for(let s=0;s<sl;s++) for(const p of ['_t','_bl','_br']){
+        const k=sk('farm',widAnt,diaAnt,a.name,s+p);
+        if((state[k]||0)===0){ state[k]=2; changed=true; }
+      }
+    } else {
+      for(let s=0;s<sl;s++){
+        const k=sk('farm',widAnt,diaAnt,a.name,s);
+        if((state[k]||0)===0){ state[k]=2; changed=true; }
+      }
+    }
+  });
+  ECO_ACCOUNTS.forEach(a=>{
+    const k=sk('eco',widAnt,diaAnt,a.name,0);
+    if((state[k]||0)===0){ state[k]=2; changed=true; }
+  });
+
+  if(changed){ saveState(); }
+  // Marcar que já rodou neste dia lógico
+  localStorage.setItem('cc_autovm', flagKey);
+}
+
+// ══════════════════════════════════════════
+// SALDO SEMANA TOTAL
+// ══════════════════════════════════════════
+function calcSemanaTotal(){
+  let tot=0;
+  NET_ACCOUNTS.forEach(a=>{
+    for(let d=0;d<7;d++) for(let s=0;s<4;s++)
+      if((state[sk('net',currentWeekId,d,a.name,s)]||0)===1) tot+=TC_NET;
+  });
+  TREE_ACCOUNTS.forEach(a=>{
+    for(let d=0;d<7;d++) for(let s=0;s<2;s++)
+      if((state[sk('tree',currentWeekId,d,a.name,s)]||0)===1) tot+=TC_TREE;
+  });
+  FARM_ACCOUNTS.forEach(a=>{
+    for(let d=0;d<7;d++) tot+=farmEarnedDay(a.name,d);
+  });
+  return tot;
+}
+
+function updateSemanaLabel(){
+  const el=document.getElementById('weekLabelTop');
+  if(el) el.textContent=formatWeekLabel(currentWeekId);
+  const es=document.getElementById('sum-semana');
+  if(es) es.textContent=fmtTC(calcSemanaTotal());
+}
+
+// ══════════════════════════════════════════
+// MINHAS CONTAS — modal
+// ══════════════════════════════════════════
+function openContasModal(){
+  renderContas();
+  openModal('contasModal');
+}
+
+// ══════════════════════════════════════════
+// OPENECO — mostrar/ocultar botões TL e Contas
+// ══════════════════════════════════════════
+// ══════════════════════════════════════════
+// ALERTA FINALIZAR SEMANA (domingo 6h+)
+// ══════════════════════════════════════════
+function checkFinSemana(){
+  const now    = new Date();
+  const diaSem = now.getDay();
+  const hora   = now.getHours();
+  const min    = now.getMinutes();
+
+  // É domingo às 6h ou mais
+  const eDomingo6h = diaSem === 0 && (hora > 6 || (hora === 6 && min >= 0));
+
+  // Verificar se já finalizou hoje (flag salvo com a data de hoje)
+  const hoje = localDateStr();
+  const jaFinalizouHoje = localStorage.getItem('cc_fin_date') === hoje;
+
+  const finBanner  = document.getElementById('finBanner');
+  const allFinBtns = document.querySelectorAll('.fin-btn');
+
+  if(eDomingo6h && !jaFinalizouHoje){
+    if(finBanner) finBanner.classList.add('show');
+    allFinBtns.forEach(b => b.classList.add('urgente'));
+  } else {
+    if(finBanner) finBanner.classList.remove('show');
+    allFinBtns.forEach(b => b.classList.remove('urgente'));
+  }
+}
+
+// ══════════════════════════════════════════
+// DEBUG
+// ══════════════════════════════════════════
+function openDebug(){
+  const now = new Date();
+  const dataLogica = new Date(now);
+  if(now.getHours() < DAY_START) dataLogica.setDate(dataLogica.getDate() - 1);
+  const ano = dataLogica.getFullYear();
+  const mes = String(dataLogica.getMonth()+1).padStart(2,'0');
+  const dia = String(dataLogica.getDate()).padStart(2,'0');
+  const flagKey = `${ano}-${mes}-${dia}`;
+
+  const wid = weekId(new Date());
+  const diaLogico = appDay();
+  const diaAnt = (diaLogico + 6) % 7;
+  const widAnt = diaLogico === 0 ? weekIdAnterior() : wid;
+
+  // checar se há coletas vazias no dia anterior
+  let vazios = 0, vermelhos = 0, verdes = 0;
+  NET_ACCOUNTS.forEach(a=>{
+    for(let s=0;s<4;s++){
+      const v = state[sk('net',widAnt,diaAnt,a.name,s)]||0;
+      if(v===0) vazios++; else if(v===2) vermelhos++; else if(v===1) verdes++;
+    }
+  });
+
+  const el = document.getElementById('debugContent');
+  el.innerHTML = `
+    <div style="color:var(--accent2);font-weight:700;margin-bottom:6px;">📅 Data/Hora</div>
+    <div>Agora: <b>${now.toLocaleString('pt-BR')}</b></div>
+    <div>Hora: <b>${now.getHours()}h</b> ${now.getHours()<DAY_START?'<span style="color:var(--accent)">(antes das 6h)</span>':''}</div>
+    <div style="color:var(--accent2);font-weight:700;margin:8px 0 4px;">🗓️ Dia Lógico</div>
+    <div>Dia atual (lógico): <b>${DAY_NAMES[diaLogico]}</b> (${diaLogico})</div>
+    <div>Dia anterior: <b>${DAY_NAMES[diaAnt]}</b> (${diaAnt})</div>
+    <div>weekId atual: <b>${wid}</b></div>
+    <div>weekId anterior: <b>${widAnt}</b></div>
+    <div style="color:var(--accent2);font-weight:700;margin:8px 0 4px;">🔴 Flag Auto-Vermelho</div>
+    <div>Salva (cc_autovm): <b style="color:${localStorage.getItem('cc_autovm')===flagKey?'var(--green)':'var(--red)'}">${localStorage.getItem('cc_autovm')||'(vazia)'}</b></div>
+    <div>Esperado hoje: <b>${flagKey}</b></div>
+    <div>Status: <b style="color:${localStorage.getItem('cc_autovm')===flagKey?'var(--green)':'var(--red)'}">${localStorage.getItem('cc_autovm')===flagKey?'✓ Já rodou hoje':'✗ NÃO rodou ainda'}</b></div>
+    <div style="color:var(--accent2);font-weight:700;margin:8px 0 4px;">📊 Network — Dia Anterior (${DAY_NAMES[diaAnt]})</div>
+    <div>🟢 Verdes (feitos): <b>${verdes}</b></div>
+    <div>🔴 Vermelhos (marcados): <b>${vermelhos}</b></div>
+    <div>⬜ Vazios (problema!): <b style="color:${vazios>0?'var(--red)':'var(--green)'}">${vazios}</b></div>
+    <div style="color:var(--accent2);font-weight:700;margin:8px 0 4px;">🔑 Chaves net no state (todas)</div>
+    <div style="font-size:10px;color:var(--muted);">${Object.keys(state).filter(k=>k.startsWith('net|')).slice(0,20).join('<br>') || '(nenhuma)'}</div>
+  `;
+  openModal('debugModal');
+}
+
+async function forcarAutoVermelho(){
+  showToast('🔄 Sincronizando antes de marcar...', false);
+  await loadFromCloud();
+  localStorage.removeItem('cc_autovm');
+  autoVermelhoDiaAnterior();
+  closeModal('debugModal');
+  showToast('✓ Auto-vermelho executado!', false);
+  if(document.getElementById('appScreen').style.display!=='none'){
+    renderTab(currentTab); updateDayBar();
+  }
+  setTimeout(openDebug, 500);
+}
+
+function limparFlagAutoVermelho(){
+  localStorage.removeItem('cc_autovm');
+  showToast('Flag limpa — rodará automaticamente amanhã', false);
+  setTimeout(openDebug, 300);
+}
+
+
+async function init(){
+  loadState();
+  currentWeekId=weekId(new Date());
+  currentDay=appDay();
+  const badge=document.getElementById('dayBadge');
+  if(badge) badge.textContent=DAY_NAMES[currentDay];
+  updateWeekLabel();
+  updateSemanaLabel();
+  checkFinSemana();
+  setInterval(()=>{ checkDayChange(); checkFinSemana(); }, 60000);
+
+  // Carregar da nuvem se disponível
+  const indicator=document.getElementById('syncIndicator');
+  if(indicator) indicator.textContent='🔄';
+
+  const carregarNuvem = async () => {
+    const atualizou = await loadFromCloud();
+    if(atualizou){
+      currentWeekId=weekId(new Date());
+      currentDay=appDay();
+      if(badge) badge.textContent=DAY_NAMES[currentDay];
+      updateWeekLabel();
+      updateSemanaLabel();
+      checkFinSemana();
+    }
+    // Auto-vermelho roda SOMENTE depois que os dados da nuvem chegaram
+    // (evita marcar vermelho com base em state local desatualizado)
+    autoVermelhoDiaAnterior();
+    if(document.getElementById('appScreen').style.display!=='none'){
+      renderTab(currentTab); updateDayBar();
+    }
+    if(indicator) indicator.textContent='☁️';
+    startCloudSync();
+  };
+
+  // Aguarda Firebase estar pronto
+  if(window._fbReady){
+    carregarNuvem();
+  } else {
+    window.addEventListener('firebase-ready', carregarNuvem, {once:true});
+    // timeout: se Firebase demorar 5s, continua offline — roda auto-vermelho mesmo assim
+    setTimeout(()=>{
+      if(indicator && indicator.textContent==='🔄'){
+        indicator.textContent='⚠️';
+        autoVermelhoDiaAnterior();
+        if(document.getElementById('appScreen').style.display!=='none'){
+          renderTab(currentTab); updateDayBar();
+        }
+      }
+    }, 5000);
+  }
+}
+init();
+
+// ══════════════════════════════════════════
+// SERVICE WORKER via Blob — PWA offline
+// ══════════════════════════════════════════
+(function registerSW(){
+  if(!('serviceWorker' in navigator)) return;
+
+  const swCode = `
+const CACHE = 'cryptoctrl-v1';
+
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(cache => {
+      // cacheia a própria página
+      return cache.addAll([self.location.href]);
+    }).catch(()=>{})
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(cached => {
+      if(cached) return cached;
+      return fetch(e.request).then(resp => {
+        if(!resp || resp.status !== 200) return resp;
+        const clone = resp.clone();
+        caches.open(CACHE).then(cache => cache.put(e.request, clone));
+        return resp;
+      }).catch(() => caches.match(e.request));
+    })
+  );
+});
+`;
+
+  try {
+    const blob = new Blob([swCode], {type:'application/javascript'});
+    const swUrl = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl, {scope: './'})
+      .then(reg => {
+        console.log('SW registrado:', reg.scope);
+        // atualiza cache ao carregar nova versão
+        reg.addEventListener('updatefound', ()=>{
+          const nw = reg.installing;
+          nw.addEventListener('statechange', ()=>{
+            if(nw.state==='installed' && navigator.serviceWorker.controller){
+              console.log('Nova versão em cache.');
+            }
+          });
+        });
+      })
+      .catch(err => console.log('SW não suportado neste contexto:', err.message));
+  } catch(e) {
+    console.log('SW Blob não suportado:', e.message);
+  }
+})();
+</script>
+</body>
+</html>
