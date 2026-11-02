@@ -462,6 +462,18 @@ body{font-family:'Noto Sans',sans-serif;background:var(--bg);color:var(--text);m
 .home-logo-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;}
 .home-app-icon{width:72px;height:72px;border-radius:18px;box-shadow:0 4px 20px rgba(0,0,0,.4);}
 
+
+.eco-card.gooddollar{border-color:rgba(0,200,83,.35);}
+.gooddollar .eco-name{color:#00c853;}
+.logo-gd{color:#00c853;}
+.gd-usdc{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:#00c853;line-height:1.1;}
+.gd-gdollar{font-size:10px;color:var(--muted);margin-top:1px;}
+.gd-price-tag{font-size:10px;color:var(--muted);text-align:center;padding:4px 0 2px;}
+.gd-price-tag strong{color:#00c853;}
+.gd-coleta-input{background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:13px;font-weight:700;padding:5px 8px;border-radius:6px;width:90px;text-align:right;font-family:'Rajdhani',sans-serif;}
+.gd-coleta-input:focus{outline:none;border-color:#00c853;}
+.gd-coleta-input.has-val{border-color:#00c853;color:#00c853;}
+
 </style>
 </head>
 <body>
@@ -485,6 +497,12 @@ body{font-family:'Noto Sans',sans-serif;background:var(--bg);color:var(--text);m
         <img src="data:image/png;base64,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" alt="JumpTask">
       </div>
       <div><div class="eco-name">JumpTask</div><div class="eco-desc">Coletas diárias por conta</div></div>
+    </div>
+    <div class="eco-card gooddollar" onclick="openEco('gooddollar')">
+      <div class="eco-icon">
+        <img src="data:image/png;base64,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" alt="GoodDollar">
+      </div>
+      <div><div class="eco-name">GoodDollar</div><div class="eco-desc">Coleta diária · GoodDollar → USDC</div></div>
     </div>
     <div class="eco-card cro disabled" onclick="showToast('Crypto.com em breve!', false)">
       <div class="eco-icon">
@@ -695,6 +713,28 @@ body{font-family:'Noto Sans',sans-serif;background:var(--bg);color:var(--text);m
       </div>
     </div>
     <button class="fin-btn" onclick="openFinalizar()" style="width:100%;margin-top:6px;padding:8px;border-radius:8px;text-align:center;border-color:var(--purple);color:var(--purple);">⚑ Finalizar Semana</button>
+  </div>
+
+  <!-- RODAPÉ GOODDOLLAR -->
+  <div class="sum-bar" id="gdBar" style="display:none;">
+    <div style="display:flex;gap:5px;width:100%;flex-wrap:wrap;">
+      <div class="sum-card" style="border-color:#00c853;">
+        <div class="sum-label" style="color:#00c853;">Hoje</div>
+        <div class="sum-val" id="gd-sum-dia" style="color:#00c853;">0/14</div>
+        <div class="sum-tc" id="gd-sum-dia-val">0 USDC</div>
+      </div>
+      <div class="sum-card total-card" style="border-color:#00c853;background:rgba(0,200,83,.08);">
+        <div class="sum-label" style="color:#00c853;">SEMANA</div>
+        <div class="sum-val" id="gd-sum-semana" style="color:#00c853;">0</div>
+        <div class="sum-tc">USDC semana</div>
+      </div>
+      <div class="sum-card" style="flex:1.2;border-color:var(--border);">
+        <div class="sum-label">Cotação G$</div>
+        <div class="sum-val" id="gd-sum-price" style="font-size:12px;color:var(--muted);">—</div>
+        <div class="sum-tc" id="gd-sum-price-sub">atualizando…</div>
+      </div>
+    </div>
+    <button class="fin-btn" onclick="openFinalizar()" style="width:100%;margin-top:6px;padding:8px;border-radius:8px;text-align:center;border-color:#00c853;color:#00c853;">⚑ Finalizar Semana</button>
   </div>
 </div>
 
@@ -924,6 +964,23 @@ const JT_ACCOUNTS = [
   {name:'Emul. Note (Principal)', email:'brendageffer4@gmail.com',           wallet:''},
 ];
 
+const GD_ACCOUNTS = [
+  {name:'Eu',       email:'lanhouse.x1@gmail.com'},
+  {name:'Brenda',   email:'brendageffer@gmail.com'},
+  {name:'Irani',    email:'irani.isg@gmail.com'},
+  {name:'Flavia',   email:'canaldabegeffer@gmail.com'},
+  {name:'Zé',       email:'josefm.2012@gmail.com'},
+  {name:'Thiago',   email:'flavinho.CEAR@gmail.com'},
+  {name:'Josi',     email:'josicoelho2023@gmail.com'},
+  {name:'Nanda',    email:'nandageffer@gmail.com'},
+  {name:'Giovanna', email:'bibliohqs.04@gmail.com'},
+  {name:'Julia',    email:'rsgpokemomrsg@gmail.com'},
+  {name:'Fabiana',  email:'gefferluiza@gmail.com'},
+  {name:'Pai',      email:'gilcimargirp@gmail.com'},
+  {name:'Alex',     email:'alessandrodurok2022@gmail.com'},
+  {name:'Luci',     email:'lucigeffer1@gmail.com'},
+];
+
 const FARM_SLOTS = [10,10,10,10,10,10,10];
 const TC_NET=30, TC_TREE=25, TC_RACAO=2, TCMC_ECO=1000;
 const JT_SLOTS=1, JT_PER_MARK=10; // 1 marcação/dia · 10 JMPT cada
@@ -951,6 +1008,7 @@ function weekId(date){
 const LS_STATE   = 'cc_v5';
 const LS_HIST    = 'cc_hist';
 const LS_HIST_JT = 'cc_hist_jt';
+const LS_HIST_GD = 'cc_hist_gd';
 
 function syncAfterHistChange(){
   clearTimeout(_saveTimer);
@@ -962,6 +1020,7 @@ function getAllData(){
     state:   state,
     hist:    JSON.parse(localStorage.getItem(LS_HIST)||'[]'),
     hist_jt: JSON.parse(localStorage.getItem(LS_HIST_JT)||'[]'),
+    hist_gd: JSON.parse(localStorage.getItem(LS_HIST_GD)||'[]'),
     fin_date:localStorage.getItem('cc_fin_date')||'',
     fin_wid: localStorage.getItem('cc_fin_weekid')||'',
     notif:   localStorage.getItem('cc_notif')||'',
@@ -976,6 +1035,7 @@ function applyData(data, skipIfOlder){
   if(data.state)   { state=data.state; localStorage.setItem(LS_STATE, JSON.stringify(state)); }
   if(data.hist)    localStorage.setItem(LS_HIST,    JSON.stringify(data.hist));
   if(data.hist_jt) localStorage.setItem(LS_HIST_JT, JSON.stringify(data.hist_jt));
+  if(data.hist_gd) localStorage.setItem(LS_HIST_GD, JSON.stringify(data.hist_gd));
   if(data.fin_date)localStorage.setItem('cc_fin_date',   data.fin_date);
   if(data.fin_wid) localStorage.setItem('cc_fin_weekid', data.fin_wid);
   if(data.notif)   localStorage.setItem('cc_notif',      data.notif);
@@ -1086,16 +1146,29 @@ function openEco(eco){
   const btnC=document.getElementById('btnContas');
   const btnW=document.getElementById('btnWallet');
   const jtBar=document.getElementById('jtBar');
+  const gdBar=document.getElementById('gdBar');
+  if(jtBar) jtBar.style.display='none';
+  if(gdBar) gdBar.style.display='none';
   if(eco==='ttcoin'){
     ll.className='logo-ttcoin';ll.innerHTML='TT<span>COIN</span>';
     sb.style.display='flex';
-    if(jtBar) jtBar.style.display='none';
     gb.style.display='flex';
     if(btnTL) btnTL.style.display='inline-block';
     if(btnC)  btnC.style.display='inline-block';
     if(btnW)  btnW.style.display='inline-block';
     buildTabs(['network','trees','farming','ecosystem'],['Network','Trees','Farming','Ecosystem']);
     showTab('network');
+  } else if(eco==='gooddollar'){
+    ll.className='logo-gd';ll.textContent='GOODDOLLAR';
+    sb.style.display='none';
+    if(gdBar) gdBar.style.display='flex';
+    gb.style.display='flex';
+    if(btnTL) btnTL.style.display='none';
+    if(btnC)  btnC.style.display='none';
+    if(btnW)  btnW.style.display='none';
+    buildTabs(['gooddollar'],['GoodDollar']);
+    showTab('gooddollar');
+    fetchGdPrice();
   } else {
     ll.className='logo-jt';ll.textContent='JUMPTASK';
     sb.style.display='none';
@@ -1145,6 +1218,7 @@ function renderTab(name){
   else if(name==='farming')  {c.innerHTML=farmHTML();   postFarm();}
   else if(name==='ecosystem'){c.innerHTML=ecoHTML();    postEco();}
   else if(name==='jumptask') {c.innerHTML=jtHTML();     postJt();}
+  else if(name==='gooddollar') {c.innerHTML=gdHTML(); postGd(); fetchGdPrice();}
   updateDayBar();
 }
 
@@ -1184,6 +1258,9 @@ function updateDayBar(){
     } else if(currentTab==='jumptask'){
       total=JT_ACCOUNTS.length*JT_SLOTS;
       JT_ACCOUNTS.forEach(a=>{for(let s=0;s<JT_SLOTS;s++) if((state[sk('jt',currentWeekId,d,a.name,s)]||0)===1) done++;});
+    } else if(currentTab==='gooddollar'){
+      total=GD_ACCOUNTS.length;
+      GD_ACCOUNTS.forEach(a=>{ if(getGdColeta(a.name,d)>0) done++; });
     }
     const ep=document.getElementById(`dp${d}`);
     if(ep) ep.textContent=done>0?`${done}`:'';
@@ -1216,7 +1293,7 @@ function cycleDot(el,sec){
 // ══════════════════════════════════════════
 // MÍNIMOS DE SAQUE
 // ══════════════════════════════════════════
-const SAQUE_MIN = {net:3000, tree:30000, farm:50000, eco:null, jt:1000};
+const SAQUE_MIN = {net:3000, tree:30000, farm:50000, eco:null, jt:1000, gd:null};
 
 function saqueColorClass(sec, total){
   const min = SAQUE_MIN[sec];
@@ -1338,7 +1415,7 @@ function abrirSaque(sec, ae){
   const el=document.getElementById(`stot-${sec}-${ae}`);
   document.getElementById('saque-acc-label').textContent=acc;
   document.getElementById('saque-acc-sub').textContent=
-    `${({net:'TTCoin Network',tree:'TTCoin Trees',farm:'Farming TC',eco:'Ecosystem',jt:'JumpTask'}[sec]||sec)} · Saldo: ${el?el.textContent:'—'} · Mín: ${SAQUE_MIN[sec]?fmtTC(SAQUE_MIN[sec])+' TC':'—'}`;
+    `${({net:'TTCoin Network',tree:'TTCoin Trees',farm:'Farming TC',eco:'Ecosystem',jt:'JumpTask',gd:'GoodDollar'}[sec]||sec)} · Saldo: ${el?el.textContent:'—'} · Mín: ${SAQUE_MIN[sec]?fmtTC(SAQUE_MIN[sec])+' TC':'—'}`;
   document.getElementById('saqueDataSolic').value=new Date().toISOString().slice(0,10);
   document.getElementById('saqueHoraSolic').value=new Date().toTimeString().slice(0,5);
   document.getElementById('saqueDestino').value='';
@@ -1382,7 +1459,7 @@ function confirmarSaque(){
   addSaque(sec, acc, valorSacado);
 
   // lançar no extrato da carteira
-  const appNome     = {net:'TTCoin Network', tree:'TTCoin Trees', farm:'Farming TC', eco:'Ecosystem', jt:'JumpTask'}[sec] || sec;
+  const appNome     = {net:'TTCoin Network', tree:'TTCoin Trees', farm:'Farming TC', eco:'Ecosystem', jt:'JumpTask', gd:'GoodDollar'}[sec] || sec;
   const origemLabel = `${appNome} · ${acc}`;
   const destinoLabel= destino==='app' ? destinoApp : destino;
   const tipo        = destino==='app' ? 'app-app' : 'app-wallet';
@@ -1885,6 +1962,246 @@ function postJt(){
   if(jtSem) jtSem.textContent=fmtJmpt(weekJmpt);
 }
 
+
+// ══════════════════════════════════════════
+// GOODDOLLAR — coleta com valor digitado + USDC
+// ══════════════════════════════════════════
+let _gdPriceUsd = 0;          // cotação atual G$ → USD (≈ USDC)
+let _gdPriceTs  = 0;          // quando foi atualizada
+let _gdPriceTimer = null;
+
+function getGdColeta(acc, day, wid){
+  wid = wid || currentWeekId;
+  return parseFloat(state[`gd|${wid}|${day}|${acc}|val`]||0) || 0;
+}
+function setGdColeta(acc, day, val){
+  state[`gd|${currentWeekId}|${day}|${acc}|val`] = val;
+  saveState();
+}
+function getSaldoGd(acc){ return state[skSaldo('gd', currentWeekId, acc)]||''; }
+function getSaldoGdNum(acc){ return parseFmt(getSaldoGd(acc))||0; }
+
+function fmtGd(v){
+  if(!v && v!==0) return '—';
+  return parseFloat(v).toLocaleString('pt-BR',{maximumFractionDigits:4});
+}
+function fmtUsdc(v){
+  if(!v && v!==0) return '—';
+  return parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:4});
+}
+function gdToUsdc(gAmount){
+  if(!_gdPriceUsd || !gAmount) return 0;
+  return gAmount * _gdPriceUsd;
+}
+
+async function fetchGdPrice(){
+  try{
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=gooddollar&vs_currencies=usd', {cache:'no-store'});
+    if(!r.ok) throw new Error('http '+r.status);
+    const j = await r.json();
+    const p = j?.gooddollar?.usd;
+    if(p && p > 0){
+      _gdPriceUsd = p;
+      _gdPriceTs  = Date.now();
+      localStorage.setItem('cc_gd_price', JSON.stringify({p, ts:_gdPriceTs}));
+    }
+  }catch(e){
+    // fallback: última cotação salva
+    try{
+      const cached = JSON.parse(localStorage.getItem('cc_gd_price')||'null');
+      if(cached && cached.p){ _gdPriceUsd = cached.p; _gdPriceTs = cached.ts||0; }
+    }catch(_){}
+    console.warn('GD price fetch failed', e);
+  }
+  postGd();
+  // atualizar a cada 5 min enquanto estiver na tela
+  clearTimeout(_gdPriceTimer);
+  if(currentEco==='gooddollar'){
+    _gdPriceTimer = setTimeout(fetchGdPrice, 5*60*1000);
+  }
+}
+
+function gdHTML(){
+  const d = currentDay;
+  const priceStr = _gdPriceUsd
+    ? `1 G$ ≈ $${_gdPriceUsd.toFixed(8).replace(/0+$/,'').replace(/\.$/,'')} USDC`
+    : 'Cotação indisponível — tentando de novo…';
+
+  // coletas do dia
+  const rows = GD_ACCOUNTS.map(a=>{
+    const ae = encA(a.name);
+    const val = getGdColeta(a.name, d);
+    const usdc = gdToUsdc(val);
+    const has = val > 0;
+    return `<div class="acc-row" style="gap:8px;align-items:flex-start;padding-top:10px;padding-bottom:10px;">
+      <div class="acc-name" style="padding-top:4px;">${a.name}
+        <div class="acc-email-s" style="display:block;font-size:9px;color:var(--muted);">${a.email}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:120px;">
+        <div class="gd-usdc" id="gd-usdc-${ae}">${has ? '≈ '+fmtUsdc(usdc)+' USDC' : '—'}</div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <input type="text" inputmode="decimal" class="gd-coleta-input${has?' has-val':''}"
+            id="gd-in-${ae}"
+            placeholder="0"
+            value="${has ? val : ''}"
+            onfocus="if(!this.value) this.value='';"
+            oninput="registrarColetaGd(this,'${ae}',${d})"
+            onblur="const v=parseFloat(String(this.value).replace(',','.')); if(!v||v<=0){this.value=''; this.classList.remove('has-val'); limparColetaGdSilent('${ae}',${d);}">
+          <span style="font-size:9px;color:var(--muted);">G$</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // saldo da semana
+  const saldoRows = GD_ACCOUNTS.map(a=>{
+    const ae = encA(a.name);
+    const val = getSaldoGd(a.name);
+    return `<div class="saldo-row">
+      <div class="saldo-left">
+        <div class="saldo-name">${a.name}
+          <div class="saldo-email">${a.email}</div>
+        </div>
+        <button class="saque-btn" onclick="abrirSaqueGd('${ae}')">💸 Registrar saída</button>
+      </div>
+      <div class="saldo-right" style="flex-direction:column;align-items:flex-end;gap:2px;">
+        <input class="saldo-input" type="text" inputmode="decimal" placeholder="0" value="${val}"
+          oninput="onSaldoInput(this,'gd','${ae}');postGd()">
+        <div class="saldo-total" id="stot-gd-${ae}" style="color:#00c853;">= 0 USDC</div>
+        <div class="gd-gdollar" id="stot-gd-g-${ae}"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `
+  <div class="gd-price-tag">💱 <strong id="gdPriceLabel">${priceStr}</strong></div>
+  <div class="card">
+    <div class="card-hdr">
+      <div><div class="card-title" style="color:#00c853">GoodDollar</div>
+        <div class="card-sub">1 coleta/dia · digite a quantia em GoodDollar</div></div>
+      <button class="reset-btn" onclick="resetDayGd()">Resetar</button>
+    </div>${rows}
+    <div class="prog-wrap">
+      <div class="prog-lbl"><span>Hoje</span><span id="gd-prog-label">0/${GD_ACCOUNTS.length}</span></div>
+      <div class="prog-bar"><div class="prog-fill" id="gd-prog-fill" style="background:linear-gradient(90deg,#00c853,#69f0ae);width:0%"></div></div>
+    </div>
+  </div>
+  <div class="saldo-card">
+    <div class="saldo-hdr"><div class="saldo-hdr-title">💰 Saldo da Semana (sem mín. de saque)</div></div>
+    ${saldoRows}
+  </div>`;
+}
+
+function registrarColetaGd(el, ae, day){
+  const acc = decA(ae);
+  const raw = String(el.value).replace(',','.');
+  const val = parseFloat(raw)||0;
+  setGdColeta(acc, day, val>0 ? val : 0);
+  el.classList.toggle('has-val', val>0);
+  const usdcEl = document.getElementById('gd-usdc-'+ae);
+  if(usdcEl) usdcEl.textContent = val>0 ? ('≈ '+fmtUsdc(gdToUsdc(val))+' USDC') : '—';
+  postGd();
+}
+function limparColetaGdSilent(ae, day){
+  setGdColeta(decA(ae), day, 0);
+  postGd();
+}
+function resetDayGd(){
+  if(!confirm('Resetar coletas de GoodDollar de '+DAY_FULL[currentDay]+'?')) return;
+  GD_ACCOUNTS.forEach(a=>{
+    delete state[`gd|${currentWeekId}|${currentDay}|${a.name}|val`];
+  });
+  saveState();
+  renderTab('gooddollar');
+  showToast('Resetado!', false);
+}
+
+function postGd(){
+  const d = currentDay;
+  let done=0, dayG=0, weekG=0;
+  GD_ACCOUNTS.forEach(a=>{
+    const v = getGdColeta(a.name, d);
+    if(v>0){ done++; dayG += v; }
+    let we=0;
+    for(let dd=0; dd<7; dd++) we += getGdColeta(a.name, dd);
+    weekG += we;
+    const base = getSaldoGdNum(a.name);
+    const totG = base + we;
+    const totU = gdToUsdc(totG);
+    const el = document.getElementById('stot-gd-'+encA(a.name));
+    const elG = document.getElementById('stot-gd-g-'+encA(a.name));
+    if(el) el.textContent = '= '+fmtUsdc(totU)+' USDC';
+    if(elG) elG.textContent = totG ? (fmtGd(totG)+' GoodDollar') : '';
+  });
+  const total = GD_ACCOUNTS.length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  const pl = document.getElementById('gd-prog-label');
+  const pf = document.getElementById('gd-prog-fill');
+  if(pl) pl.textContent = `${done}/${total} · ≈ ${fmtUsdc(gdToUsdc(dayG))} USDC`;
+  if(pf) pf.style.width = pct+'%';
+
+  const gdDia = document.getElementById('gd-sum-dia');
+  const gdDiaVal = document.getElementById('gd-sum-dia-val');
+  const gdSem = document.getElementById('gd-sum-semana');
+  const gdPrice = document.getElementById('gd-sum-price');
+  const gdPriceSub = document.getElementById('gd-sum-price-sub');
+  const gdPriceLabel = document.getElementById('gdPriceLabel');
+  if(gdDia) gdDia.textContent = `${done}/${total}`;
+  if(gdDiaVal) gdDiaVal.textContent = '≈ '+fmtUsdc(gdToUsdc(dayG))+' USDC';
+  if(gdSem) gdSem.textContent = fmtUsdc(gdToUsdc(weekG));
+  if(gdPrice) gdPrice.textContent = _gdPriceUsd ? ('$'+_gdPriceUsd.toFixed(8).replace(/\.?0+$/,'')) : '—';
+  if(gdPriceSub){
+    if(_gdPriceTs){
+      const min = Math.round((Date.now()-_gdPriceTs)/60000);
+      gdPriceSub.textContent = min<=1 ? 'agora' : ('há '+min+' min');
+    } else gdPriceSub.textContent = 'sem cotação';
+  }
+  if(gdPriceLabel){
+    gdPriceLabel.textContent = _gdPriceUsd
+      ? `1 G$ ≈ $${_gdPriceUsd.toFixed(8).replace(/\.?0+$/,'')} USDC`
+      : 'Cotação indisponível — tentando de novo…';
+  }
+  updateDayBar();
+}
+
+function abrirSaqueGd(ae){
+  const acc = decA(ae);
+  _sqStatus = 'solicitado';
+  _saqueCtx = {sec:'gd', acc};
+  const el = document.getElementById('stot-gd-'+ae);
+  document.getElementById('saque-acc-label').textContent = acc;
+  document.getElementById('saque-acc-sub').textContent =
+    `GoodDollar · Saldo: ${el?el.textContent:'—'} · sem mín. de saque`;
+  document.getElementById('saqueDataSolic').value = new Date().toISOString().slice(0,10);
+  document.getElementById('saqueHoraSolic').value = new Date().toTimeString().slice(0,5);
+  document.getElementById('saqueDestino').value = '';
+  document.getElementById('saqueDestinoAppWrap').style.display = 'none';
+  document.getElementById('saqueEnderecoWallet').value = '';
+  document.getElementById('saqueHash').value = '';
+  document.getElementById('saqueNovoSaldo').value = '';
+  document.getElementById('saqueObs').value = '';
+  document.getElementById('saqueDataConclusaoWrap').style.display = 'none';
+  document.querySelectorAll('[data-sq-status]').forEach(b=>b.classList.toggle('active', b.dataset.sqStatus==='solicitado'));
+  openModal('saqueModal');
+}
+
+function openHistoricoGd(){
+  const hist = JSON.parse(localStorage.getItem(LS_HIST_GD)||'[]');
+  buildHistCarr(hist, (s)=>{
+    const rows = Object.entries(s.contas||{}).map(([acc,v])=>
+      `<div class="hist-row"><span>${acc}</span><span class="hist-tc" style="color:#00c853;">${fmtUsdc(v.totalUsdc||0)} USDC <span style="color:var(--muted);font-size:10px;">(${fmtGd(v.total||0)} G$ · +${fmtGd(v.earned||0)})</span></span></div>`
+    ).join('');
+    return `<div class="hist-app-title" style="color:#00c853;">💚 GoodDollar</div>`+rows+
+      (s.price?`<div style="font-size:10px;color:var(--muted);margin-top:8px;">Cotação na finalização: $${s.price}</div>`:'');
+  }, (i)=>{
+    const h = JSON.parse(localStorage.getItem(LS_HIST_GD)||'[]');
+    h.splice(i,1); localStorage.setItem(LS_HIST_GD, JSON.stringify(h));
+    syncAfterHistChange();
+    openHistoricoGd(); showToast('Excluído!',false);
+  }, 'Nenhuma semana do GoodDollar finalizada ainda.');
+}
+
+
 let _saqueJtCtx={};
 function abrirSaqueJt(ae){
   const acc=decA(ae);
@@ -2017,6 +2334,21 @@ function openFinalizar(){
       `Coletas da semana: <b>+${fmtJmpt(totalEarned)} JMPT</b><br>`+
       `Total estimado: <b>${fmtJmpt(totalBase+totalEarned)} JMPT</b><br><br>`+
       `Os dados serão salvos no histórico e a semana será resetada.`;
+  } else if(currentEco==='gooddollar'){
+    let totalBase=0, totalEarned=0;
+    GD_ACCOUNTS.forEach(a=>{
+      totalBase+=getSaldoGdNum(a.name);
+      for(let d=0;d<7;d++) totalEarned+=getGdColeta(a.name,d);
+    });
+    const tot=totalBase+totalEarned;
+    document.getElementById('fin-desc').innerHTML=
+      `<b>Semana:</b> ${formatWeekLabel(wid)}<br><br>`+
+      `💚 GoodDollar<br>`+
+      `Saldo inicial: <b>${fmtGd(totalBase)} G$</b> ≈ <b>${fmtUsdc(gdToUsdc(totalBase))} USDC</b><br>`+
+      `Coletas da semana: <b>+${fmtGd(totalEarned)} G$</b> ≈ <b>${fmtUsdc(gdToUsdc(totalEarned))} USDC</b><br>`+
+      `Total estimado: <b>${fmtGd(tot)} G$</b> ≈ <b>${fmtUsdc(gdToUsdc(tot))} USDC</b><br>`+
+      (_gdPriceUsd?`<span style="font-size:11px;color:var(--muted)">Cotação: 1 G$ ≈ $${_gdPriceUsd.toFixed(8).replace(/\.?0+$/,'')} USDC</span><br>`:'')+
+      `<br>Os dados serão salvos no histórico e a semana será resetada.`;
   } else {
     // Resumo TTCoin
     let netTC=0,treeTC=0,farmTC=0,ecoTCMC=0;
@@ -2084,6 +2416,19 @@ function confirmarFinalizar(){
   });
   histJt.unshift(snapJt);
   localStorage.setItem('cc_hist_jt',JSON.stringify(histJt));
+
+  // histórico GoodDollar
+  const histGd=JSON.parse(localStorage.getItem(LS_HIST_GD)||'[]');
+  const snapGd={weekId:wid, label:formatWeekLabel(wid), price:_gdPriceUsd||null, contas:{}};
+  GD_ACCOUNTS.forEach(a=>{
+    const base=getSaldoGdNum(a.name);
+    let earned=0;
+    for(let d=0;d<7;d++) earned+=getGdColeta(a.name,d,wid);
+    const total=base+earned;
+    snapGd.contas[a.name]={base, earned, total, totalUsdc: gdToUsdc(total)};
+  });
+  histGd.unshift(snapGd);
+  localStorage.setItem(LS_HIST_GD, JSON.stringify(histGd));
 
   hist.unshift(snap);
   localStorage.setItem('cc_hist',JSON.stringify(hist));
@@ -2181,6 +2526,7 @@ function openHistoricoJt(){
 
 function abrirHistorico(){
   if(currentEco==='jumptask') openHistoricoJt();
+  else if(currentEco==='gooddollar') openHistoricoGd();
   else openHistorico();
 }
 
@@ -3310,6 +3656,8 @@ function checkFinSemana(){
 // INIT
 // ══════════════════════════════════════════
 async function init(){
+  // cotação GD em cache
+  try{ const c=JSON.parse(localStorage.getItem('cc_gd_price')||'null'); if(c&&c.p){_gdPriceUsd=c.p;_gdPriceTs=c.ts||0;} }catch(e){}
   loadState();
   currentWeekId=weekId(new Date());
   currentDay=appDay();
