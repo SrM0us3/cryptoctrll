@@ -2046,7 +2046,7 @@ function gdHTML(){
             value="${has ? val : ''}"
             onfocus="if(!this.value) this.value='';"
             oninput="registrarColetaGd(this,'${ae}',${d})"
-            onblur="const v=parseFloat(String(this.value).replace(',','.')); if(!v||v<=0){this.value=''; this.classList.remove('has-val'); limparColetaGdSilent('${ae}',${d);}">
+            onblur="const v=parseFloat(String(this.value).replace(',','.')); if(!v||v<=0){this.value=''; this.classList.remove('has-val'); limparColetaGdSilent('${ae}',${d});}">
           <span style="font-size:9px;color:var(--muted);">G$</span>
         </div>
       </div>
