@@ -474,6 +474,32 @@ body{font-family:'Noto Sans',sans-serif;background:var(--bg);color:var(--text);m
 .gd-coleta-input:focus{outline:none;border-color:#00c853;}
 .gd-coleta-input.has-val{border-color:#00c853;color:#00c853;}
 
+
+#gdTimelineScreen{display:none;min-height:100vh;padding-bottom:20px;}
+.gd-tl-header{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;position:sticky;top:0;z-index:100;}
+.gd-tl-title{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;color:#00c853;}
+.gd-tl-filters{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:8px 0 2px;}
+.gd-tl-filters::-webkit-scrollbar{display:none;}
+.gd-tl-filter{flex:none;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-family:'Noto Sans',sans-serif;}
+.gd-tl-filter.active{background:#00c853;border-color:#00c853;color:#000;}
+.gd-tl-sum{display:flex;gap:8px;padding:10px 14px;overflow-x:auto;}
+.gd-tl-sum-card{flex:1;min-width:100px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;}
+.gd-tl-sum-card .lbl{font-size:10px;color:var(--muted);text-transform:uppercase;}
+.gd-tl-sum-card .val{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;color:#00c853;margin-top:2px;}
+.gd-tl-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin:0 14px 8px;border-left:3px solid #00c853;}
+.gd-tl-item.tipo-swap{border-left-color:#a371f7;}
+.gd-tl-item.tipo-envio_cex{border-left-color:#00c853;}
+.gd-tl-item-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.gd-tl-item-title{font-size:13px;font-weight:600;}
+.gd-tl-item-date{font-size:10px;color:var(--muted);}
+.gd-tl-item-desc{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5;}
+.gd-tl-item-val{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;color:#00c853;}
+.gd-tl-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px;}
+.gd-tl-empty{text-align:center;color:var(--muted);padding:40px 20px;font-size:13px;line-height:1.6;}
+.gd-choice-btn{width:100%;padding:14px;margin-bottom:10px;border-radius:10px;border:1.5px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;font-family:'Noto Sans',sans-serif;text-align:left;}
+.gd-choice-btn:active{border-color:#00c853;}
+.gd-choice-btn span{display:block;font-size:11px;font-weight:400;color:var(--muted);margin-top:3px;}
+
 </style>
 </head>
 <body>
@@ -531,6 +557,96 @@ body{font-family:'Noto Sans',sans-serif;background:var(--bg);color:var(--text);m
   </div>
   <input type="file" id="importFileInput" accept=".json" onchange="importBackup(this)">
 
+</div>
+
+
+<!-- GOODDOLLAR TIMELINE -->
+<div id="gdTimelineScreen">
+  <div class="gd-tl-header">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="logo-back" onclick="voltarTTCoin()" style="font-size:22px;cursor:pointer;color:var(--muted);">‹</span>
+        <span class="gd-tl-title">Timeline GoodDollar</span>
+      </div>
+      <button class="tl-add-btn" style="background:#00c853;" onclick="openGdEventChoice()">＋ Evento</button>
+    </div>
+    <div class="gd-tl-filters" id="gdTlFilters"></div>
+  </div>
+  <div class="gd-tl-sum" id="gdTlSum"></div>
+  <div id="gdTlList" style="padding-bottom:24px;"></div>
+</div>
+
+<div class="modal-bg" id="gdChoiceModal">
+  <div class="modal">
+    <h3 style="color:#00c853;">＋ Novo evento</h3>
+    <button class="gd-choice-btn" onclick="closeModal('gdChoiceModal');openGdSwapModal()">
+      🔄 Swap G$ → USDC
+      <span>Converte na wallet · não zera o saldo do app</span>
+    </button>
+    <button class="gd-choice-btn" onclick="closeModal('gdChoiceModal');openGdEnvioModal()">
+      📤 Envio para CEX
+      <span>Total ou parcial · reduz/zera o saldo da conta</span>
+    </button>
+    <button class="modal-close" onclick="closeModal('gdChoiceModal')">Cancelar</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="gdSwapModal">
+  <div class="modal">
+    <h3 style="color:#00c853;">🔄 Registrar Swap</h3>
+    <label class="mov-form-label">Conta</label>
+    <select class="mov-form-select" id="gdSwapConta"></select>
+    <label class="mov-form-label" style="margin-top:10px;">Quantia G$</label>
+    <input class="mov-form-input" type="text" inputmode="decimal" id="gdSwapG" placeholder="0" style="font-size:16px;font-weight:700;text-align:right;">
+    <label class="mov-form-label" style="margin-top:10px;">USDC obtidos</label>
+    <input class="mov-form-input" type="text" inputmode="decimal" id="gdSwapUsdc" placeholder="0.00" style="font-size:16px;font-weight:700;text-align:right;">
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <div style="flex:1;"><label class="mov-form-label">Data</label>
+        <input class="mov-form-input" type="date" id="gdSwapData"></div>
+      <div style="flex:1;"><label class="mov-form-label">Hora</label>
+        <input class="mov-form-input" type="time" id="gdSwapHora"></div>
+    </div>
+    <label class="mov-form-label" style="margin-top:10px;">Hash (opcional)</label>
+    <input class="mov-form-input" type="text" id="gdSwapHash" placeholder="0x…">
+    <label class="mov-form-label" style="margin-top:10px;">Obs. (opcional)</label>
+    <input class="mov-form-input" type="text" id="gdSwapObs" placeholder="">
+    <p style="font-size:11px;color:var(--muted);margin:12px 0 8px;">ℹ️ O saldo de coletas no app <b>não</b> será zerado.</p>
+    <button class="mov-confirm-btn" style="background:#00c853;" onclick="confirmarGdSwap()">Salvar Swap</button>
+    <button class="modal-close" onclick="closeModal('gdSwapModal')">Cancelar</button>
+  </div>
+</div>
+
+<div class="modal-bg" id="gdEnvioModal">
+  <div class="modal">
+    <h3 style="color:#00c853;">📤 Envio para CEX</h3>
+    <label class="mov-form-label">Conta</label>
+    <select class="mov-form-select" id="gdEnvioConta" onchange="onGdEnvioContaChange()"></select>
+    <div id="gdEnvioSaldoHint" style="font-size:11px;color:var(--muted);margin:4px 0 8px;"></div>
+    <label class="mov-form-label">Valor USDC</label>
+    <input class="mov-form-input" type="text" inputmode="decimal" id="gdEnvioUsdc" placeholder="0.00" style="font-size:16px;font-weight:700;text-align:right;">
+    <div style="display:flex;gap:8px;margin:8px 0;">
+      <button type="button" class="tipo-btn" id="gdEnvioTodo" onclick="gdEnvioSetTodo(true)" style="flex:1;">Todo o saldo</button>
+      <button type="button" class="tipo-btn active" id="gdEnvioParcial" onclick="gdEnvioSetTodo(false)" style="flex:1;">Parcial</button>
+    </div>
+    <label class="mov-form-label">CEX destino</label>
+    <input class="mov-form-input" type="text" id="gdEnvioCex" placeholder="Ex: Binance, Bybit…" list="gdCexList">
+    <datalist id="gdCexList">
+      <option value="Binance"></option><option value="Bybit"></option><option value="OKX"></option><option value="Gate.io"></option>
+    </datalist>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <div style="flex:1;"><label class="mov-form-label">Data</label>
+        <input class="mov-form-input" type="date" id="gdEnvioData"></div>
+      <div style="flex:1;"><label class="mov-form-label">Hora</label>
+        <input class="mov-form-input" type="time" id="gdEnvioHora"></div>
+    </div>
+    <label class="mov-form-label" style="margin-top:10px;">Hash (opcional)</label>
+    <input class="mov-form-input" type="text" id="gdEnvioHash" placeholder="0x…">
+    <label class="mov-form-label" style="margin-top:10px;">Obs. (opcional)</label>
+    <input class="mov-form-input" type="text" id="gdEnvioObs" placeholder="">
+    <p style="font-size:11px;color:var(--accent2);margin:12px 0 8px;background:rgba(232,196,74,.08);padding:8px;border-radius:8px;border:1px solid rgba(232,196,74,.25);">⚠️ Ao salvar, o saldo desta conta no app será <b>reduzido ou zerado</b>.</p>
+    <button class="mov-confirm-btn" style="background:#00c853;" onclick="confirmarGdEnvio()">Confirmar envio</button>
+    <button class="modal-close" onclick="closeModal('gdEnvioModal')">Cancelar</button>
+  </div>
 </div>
 
 <!-- TIMELINE SCREEN -->
@@ -637,7 +753,7 @@ body{font-family:'Noto Sans',sans-serif;background:var(--bg);color:var(--text);m
       </div>
       <div class="hdr-right">
         <span id="syncIndicator" title="Sincronizando..." style="font-size:14px;cursor:default;opacity:.7;">☁️</span>
-        <button class="icon-btn" id="btnTimeline" style="display:none" onclick="openTimeline()">📅</button>
+        <button class="icon-btn" id="btnTimeline" style="display:none" onclick="openTimelineBtn()">📅</button>
         <button class="icon-btn" id="btnContas"   style="display:none" onclick="openContasModal()">👤</button>
         <button class="icon-btn" id="btnWallet"   style="display:none" onclick="openWallets()">👛</button>
         <button class="icon-btn" onclick="abrirHistorico()">📋</button>
@@ -1163,7 +1279,7 @@ function openEco(eco){
     sb.style.display='none';
     if(gdBar) gdBar.style.display='flex';
     gb.style.display='flex';
-    if(btnTL) btnTL.style.display='none';
+    if(btnTL) btnTL.style.display='inline-block';
     if(btnC)  btnC.style.display='none';
     if(btnW)  btnW.style.display='none';
     buildTabs(['gooddollar'],['GoodDollar']);
@@ -1185,6 +1301,7 @@ function openEco(eco){
 function voltarTTCoin(){
   document.getElementById('walletScreen').style.display='none';
   document.getElementById('timelineScreen').style.display='none';
+  const _gdt=document.getElementById('gdTimelineScreen'); if(_gdt) _gdt.style.display='none';
   document.getElementById('homeScreen').style.display='none';
   document.getElementById('appScreen').style.display='block';
   // reativar estado do app
@@ -1199,6 +1316,7 @@ function goHome(){
   document.getElementById('appScreen').style.display='none';
   document.getElementById('walletScreen').style.display='none';
   document.getElementById('timelineScreen').style.display='none';
+  const _gdh=document.getElementById('gdTimelineScreen'); if(_gdh) _gdh.style.display='none';
   document.getElementById('homeScreen').style.display='flex';
 }
 function buildTabs(ids,labels){
@@ -2062,7 +2180,7 @@ function gdHTML(){
         <div class="saldo-name">${a.name}
           <div class="saldo-email">${a.email}</div>
         </div>
-        <button class="saque-btn" onclick="abrirSaqueGd('${ae}')">💸 Registrar saída</button>
+        <button class="saque-btn" onclick="abrirSaqueGd('${ae}')">📤 Swap / Envio CEX</button>
       </div>
       <div class="saldo-right" style="flex-direction:column;align-items:flex-end;gap:2px;">
         <input class="saldo-input" type="text" inputmode="decimal" placeholder="0" value="${val}"
@@ -2127,11 +2245,12 @@ function postGd(){
     weekG += we;
     const base = getSaldoGdNum(a.name);
     const totG = base + we;
-    const totU = gdToUsdc(totG);
+    const debit = getGdDebit(a.name);
+    const totU = Math.max(0, gdToUsdc(totG) - debit);
     const el = document.getElementById('stot-gd-'+encA(a.name));
     const elG = document.getElementById('stot-gd-g-'+encA(a.name));
     if(el) el.textContent = '= '+fmtUsdc(totU)+' USDC';
-    if(elG) elG.textContent = totG ? (fmtGd(totG)+' GoodDollar') : '';
+    if(elG) elG.textContent = (totG||debit) ? (fmtGd(totG)+' G$'+(debit?(' · −'+fmtUsdc(debit)+' env.'):'')) : '';
   });
   const total = GD_ACCOUNTS.length;
   const pct = total ? Math.round(done/total*100) : 0;
@@ -2165,25 +2284,280 @@ function postGd(){
 }
 
 function abrirSaqueGd(ae){
-  const acc = decA(ae);
-  _sqStatus = 'solicitado';
-  _saqueCtx = {sec:'gd', acc};
-  const el = document.getElementById('stot-gd-'+ae);
-  document.getElementById('saque-acc-label').textContent = acc;
-  document.getElementById('saque-acc-sub').textContent =
-    `GoodDollar · Saldo: ${el?el.textContent:'—'} · sem mín. de saque`;
-  document.getElementById('saqueDataSolic').value = new Date().toISOString().slice(0,10);
-  document.getElementById('saqueHoraSolic').value = new Date().toTimeString().slice(0,5);
-  document.getElementById('saqueDestino').value = '';
-  document.getElementById('saqueDestinoAppWrap').style.display = 'none';
-  document.getElementById('saqueEnderecoWallet').value = '';
-  document.getElementById('saqueHash').value = '';
-  document.getElementById('saqueNovoSaldo').value = '';
-  document.getElementById('saqueObs').value = '';
-  document.getElementById('saqueDataConclusaoWrap').style.display = 'none';
-  document.querySelectorAll('[data-sq-status]').forEach(b=>b.classList.toggle('active', b.dataset.sqStatus==='solicitado'));
-  openModal('saqueModal');
+  window._gdPrefillConta = decA(ae);
+  openGdEventChoice();
 }
+
+
+// ══════════════════════════════════════════
+// GOODDOLLAR — Timeline (Swap + Envio CEX)
+// ══════════════════════════════════════════
+let _gdTlFiltro = 'todos';
+let _gdEnvioFull = false;
+let _gdEditId = null;
+
+function getGdEvents(){ return state['gd_events'] || []; }
+function saveGdEvents(ev){ state['gd_events']=ev; saveState(); }
+
+function getGdDebit(acc, wid){
+  wid = wid || currentWeekId;
+  return parseFloat(state['gd|debit|'+wid+'|'+acc]||0) || 0;
+}
+function addGdDebit(acc, usdc){
+  const k = 'gd|debit|'+currentWeekId+'|'+acc;
+  state[k] = getGdDebit(acc) + usdc;
+  saveState();
+}
+function clearGdAccountWeek(acc){
+  state[skSaldo('gd', currentWeekId, acc)] = '';
+  for(let d=0;d<7;d++) delete state['gd|'+currentWeekId+'|'+d+'|'+acc+'|val'];
+  delete state['gd|debit|'+currentWeekId+'|'+acc];
+  saveState();
+}
+function getGdSaldoUsdc(acc){
+  let weekG=0;
+  for(let dd=0;dd<7;dd++) weekG += getGdColeta(acc, dd);
+  const totG = getSaldoGdNum(acc) + weekG;
+  return Math.max(0, gdToUsdc(totG) - getGdDebit(acc));
+}
+
+function openTimelineBtn(){
+  if(currentEco==='gooddollar') openGdTimeline();
+  else openTimeline();
+}
+
+function openGdTimeline(){
+  document.getElementById('homeScreen').style.display='none';
+  document.getElementById('appScreen').style.display='none';
+  document.getElementById('walletScreen').style.display='none';
+  document.getElementById('timelineScreen').style.display='none';
+  const gdt=document.getElementById('gdTimelineScreen');
+  if(gdt) gdt.style.display='block';
+  _gdTlFiltro='todos';
+  renderGdTimeline();
+}
+
+function openGdEventChoice(){ openModal('gdChoiceModal'); }
+
+function populateGdContaSelect(selId, selected){
+  const sel=document.getElementById(selId);
+  if(!sel) return;
+  sel.innerHTML = GD_ACCOUNTS.map(a=>{
+    const s = (selected && selected===a.name) ? ' selected' : '';
+    return '<option value="'+a.name+'"'+s+'>'+a.name+' · '+a.email+'</option>';
+  }).join('');
+}
+
+function openGdSwapModal(editId){
+  _gdEditId = editId || null;
+  const now=new Date();
+  populateGdContaSelect('gdSwapConta', window._gdPrefillConta||'');
+  window._gdPrefillConta=null;
+  document.getElementById('gdSwapG').value='';
+  document.getElementById('gdSwapUsdc').value='';
+  document.getElementById('gdSwapData').value=now.toISOString().slice(0,10);
+  document.getElementById('gdSwapHora').value=now.toTimeString().slice(0,5);
+  document.getElementById('gdSwapHash').value='';
+  document.getElementById('gdSwapObs').value='';
+  if(editId){
+    const ev=getGdEvents().find(e=>e.id===editId);
+    if(ev){
+      populateGdContaSelect('gdSwapConta', ev.conta);
+      document.getElementById('gdSwapG').value=ev.valorG||'';
+      document.getElementById('gdSwapUsdc').value=ev.valorUsdc||'';
+      document.getElementById('gdSwapData').value=ev.data||'';
+      document.getElementById('gdSwapHora').value=ev.hora||'';
+      document.getElementById('gdSwapHash').value=ev.hash||'';
+      document.getElementById('gdSwapObs').value=ev.obs||'';
+    }
+  }
+  openModal('gdSwapModal');
+}
+
+function confirmarGdSwap(){
+  const conta=document.getElementById('gdSwapConta').value;
+  const valorG=parseFloat(String(document.getElementById('gdSwapG').value).replace(',','.'))||0;
+  const valorUsdc=parseFloat(String(document.getElementById('gdSwapUsdc').value).replace(',','.'))||0;
+  const data=document.getElementById('gdSwapData').value;
+  const hora=document.getElementById('gdSwapHora').value;
+  const hash=document.getElementById('gdSwapHash').value.trim();
+  const obs=document.getElementById('gdSwapObs').value.trim();
+  if(!conta){ alert('Selecione a conta.'); return; }
+  if(valorG<=0 && valorUsdc<=0){ alert('Informe quantia G$ ou USDC.'); return; }
+  if(!data){ alert('Informe a data.'); return; }
+  const entry={
+    id: _gdEditId || ('gd_'+Date.now()),
+    tipo:'swap', conta, valorG, valorUsdc,
+    data, hora:hora||null, hash:hash||null, obs:obs||null
+  };
+  const evs=getGdEvents();
+  if(_gdEditId){ const i=evs.findIndex(e=>e.id===_gdEditId); if(i>=0) evs[i]=entry; else evs.push(entry); }
+  else evs.push(entry);
+  saveGdEvents(evs);
+  closeModal('gdSwapModal');
+  showToast('✓ Swap registrado!', false);
+  renderGdTimeline();
+}
+
+function openGdEnvioModal(editId){
+  _gdEditId = editId || null;
+  _gdEnvioFull = false;
+  const now=new Date();
+  populateGdContaSelect('gdEnvioConta', window._gdPrefillConta||'');
+  window._gdPrefillConta=null;
+  document.getElementById('gdEnvioUsdc').value='';
+  document.getElementById('gdEnvioCex').value=localStorage.getItem('cc_gd_last_cex')||'Binance';
+  document.getElementById('gdEnvioData').value=now.toISOString().slice(0,10);
+  document.getElementById('gdEnvioHora').value=now.toTimeString().slice(0,5);
+  document.getElementById('gdEnvioHash').value='';
+  document.getElementById('gdEnvioObs').value='';
+  gdEnvioSetTodo(false);
+  if(editId){
+    const ev=getGdEvents().find(e=>e.id===editId);
+    if(ev){
+      populateGdContaSelect('gdEnvioConta', ev.conta);
+      document.getElementById('gdEnvioUsdc').value=ev.valorUsdc||'';
+      document.getElementById('gdEnvioCex').value=ev.cex||'';
+      document.getElementById('gdEnvioData').value=ev.data||'';
+      document.getElementById('gdEnvioHora').value=ev.hora||'';
+      document.getElementById('gdEnvioHash').value=ev.hash||'';
+      document.getElementById('gdEnvioObs').value=ev.obs||'';
+      _gdEnvioFull=!!ev.full;
+      gdEnvioSetTodo(_gdEnvioFull);
+    }
+  }
+  onGdEnvioContaChange();
+  openModal('gdEnvioModal');
+}
+
+function onGdEnvioContaChange(){
+  const conta=document.getElementById('gdEnvioConta').value;
+  const u=getGdSaldoUsdc(conta);
+  const el=document.getElementById('gdEnvioSaldoHint');
+  if(el) el.textContent = 'Saldo atual no app: ≈ '+fmtUsdc(u)+' USDC';
+  if(_gdEnvioFull) document.getElementById('gdEnvioUsdc').value = u>0 ? String(Number(u.toFixed(6))) : '';
+}
+
+function gdEnvioSetTodo(full){
+  _gdEnvioFull = !!full;
+  const t=document.getElementById('gdEnvioTodo');
+  const p=document.getElementById('gdEnvioParcial');
+  if(t) t.classList.toggle('active', full);
+  if(p) p.classList.toggle('active', !full);
+  if(full) onGdEnvioContaChange();
+}
+
+function confirmarGdEnvio(){
+  const conta=document.getElementById('gdEnvioConta').value;
+  const valorUsdc=parseFloat(String(document.getElementById('gdEnvioUsdc').value).replace(',','.'))||0;
+  const cex=document.getElementById('gdEnvioCex').value.trim()||'CEX';
+  const data=document.getElementById('gdEnvioData').value;
+  const hora=document.getElementById('gdEnvioHora').value;
+  const hash=document.getElementById('gdEnvioHash').value.trim();
+  const obs=document.getElementById('gdEnvioObs').value.trim();
+  if(!conta){ alert('Selecione a conta.'); return; }
+  if(valorUsdc<=0){ alert('Informe o valor em USDC.'); return; }
+  if(!data){ alert('Informe a data.'); return; }
+
+  // Só aplica efeito no saldo em lançamento novo (não na edição)
+  if(!_gdEditId){
+    if(_gdEnvioFull) clearGdAccountWeek(conta);
+    else addGdDebit(conta, valorUsdc);
+  }
+  localStorage.setItem('cc_gd_last_cex', cex);
+
+  const entry={
+    id: _gdEditId || ('gd_'+Date.now()),
+    tipo:'envio_cex', conta, valorUsdc, cex, full:!!_gdEnvioFull,
+    data, hora:hora||null, hash:hash||null, obs:obs||null
+  };
+  const evs=getGdEvents();
+  if(_gdEditId){ const i=evs.findIndex(e=>e.id===_gdEditId); if(i>=0) evs[i]=entry; else evs.push(entry); }
+  else evs.push(entry);
+  saveGdEvents(evs);
+  closeModal('gdEnvioModal');
+  showToast('✓ Envio registrado!', false);
+  renderGdTimeline();
+  if(document.getElementById('appScreen').style.display!=='none' && currentTab==='gooddollar'){
+    renderTab('gooddollar');
+  }
+}
+
+function excluirGdEvento(id){
+  if(!confirm('Excluir este evento? (o saldo do app não é revertido automaticamente)')) return;
+  saveGdEvents(getGdEvents().filter(e=>e.id!==id));
+  showToast('Excluído!', false);
+  renderGdTimeline();
+}
+
+function renderGdTimeline(){
+  const filtros=[
+    {id:'todos', label:'Todos'},
+    {id:'swap', label:'Swap'},
+    {id:'envio_cex', label:'Envio CEX'},
+  ];
+  const bar=document.getElementById('gdTlFilters');
+  if(bar){
+    bar.innerHTML=filtros.map(f=>
+      '<button class="gd-tl-filter'+(f.id===_gdTlFiltro?' active':'')+'" onclick="_gdTlFiltro=\''+f.id+'\';renderGdTimeline()">'+f.label+'</button>'
+    ).join('');
+  }
+
+  let evs=getGdEvents().slice();
+  if(_gdTlFiltro!=='todos') evs=evs.filter(e=>e.tipo===_gdTlFiltro);
+  evs.sort((a,b)=>{
+    const da=new Date((a.data||'2000-01-01')+'T'+(a.hora||'12:00'));
+    const db=new Date((b.data||'2000-01-01')+'T'+(b.hora||'12:00'));
+    return db-da;
+  });
+
+  const all=getGdEvents();
+  const totalSwapUsdc=all.filter(e=>e.tipo==='swap').reduce((s,e)=>s+(e.valorUsdc||0),0);
+  const totalEnvio=all.filter(e=>e.tipo==='envio_cex').reduce((s,e)=>s+(e.valorUsdc||0),0);
+  const sum=document.getElementById('gdTlSum');
+  if(sum){
+    sum.innerHTML=
+      '<div class="gd-tl-sum-card"><div class="lbl">Swaps (USDC)</div><div class="val">'+fmtUsdc(totalSwapUsdc)+'</div></div>'+
+      '<div class="gd-tl-sum-card"><div class="lbl">Enviado CEX</div><div class="val">'+fmtUsdc(totalEnvio)+'</div></div>'+
+      '<div class="gd-tl-sum-card"><div class="lbl">Eventos</div><div class="val" style="color:var(--text)">'+all.length+'</div></div>';
+  }
+
+  const list=document.getElementById('gdTlList');
+  if(!list) return;
+  if(!evs.length){
+    list.innerHTML='<div class="gd-tl-empty">Nenhum evento ainda.<br><br>Toque em <b>＋ Evento</b> para registrar<br>um Swap ou Envio para CEX.</div>';
+    return;
+  }
+  list.innerHTML=evs.map(e=>{
+    const dataFmt=e.data?new Date(e.data+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+    const horaFmt=e.hora?(' '+e.hora):'';
+    if(e.tipo==='swap'){
+      return '<div class="gd-tl-item tipo-swap">'+
+        '<div class="gd-tl-item-top"><div>'+
+        '<div class="gd-tl-item-title">🔄 Swap · '+e.conta+'</div>'+
+        '<div class="gd-tl-item-date">'+dataFmt+horaFmt+'</div></div>'+
+        '<div class="gd-tl-item-val" style="color:#a371f7;">'+fmtUsdc(e.valorUsdc||0)+' USDC</div></div>'+
+        '<div class="gd-tl-item-desc">'+fmtGd(e.valorG||0)+' G$ → '+fmtUsdc(e.valorUsdc||0)+' USDC'+
+        (e.hash?(' · Hash: '+String(e.hash).slice(0,14)+'…'):'')+(e.obs?(' · '+e.obs):'')+'</div>'+
+        '<div class="gd-tl-actions">'+
+        '<button class="mov-edit-btn" onclick="openGdSwapModal(\''+e.id+'\')">✏️ Editar</button>'+
+        '<button class="mov-del-btn" onclick="excluirGdEvento(\''+e.id+'\')">🗑️</button>'+
+        '</div></div>';
+    }
+    return '<div class="gd-tl-item tipo-envio_cex">'+
+      '<div class="gd-tl-item-top"><div>'+
+      '<div class="gd-tl-item-title">📤 Envio CEX · '+e.conta+(e.full?' (total)':'')+'</div>'+
+      '<div class="gd-tl-item-date">'+dataFmt+horaFmt+'</div></div>'+
+      '<div class="gd-tl-item-val">'+fmtUsdc(e.valorUsdc||0)+' USDC</div></div>'+
+      '<div class="gd-tl-item-desc">→ '+(e.cex||'CEX')+
+      (e.hash?(' · Hash: '+String(e.hash).slice(0,14)+'…'):'')+(e.obs?(' · '+e.obs):'')+'</div>'+
+      '<div class="gd-tl-actions">'+
+      '<button class="mov-edit-btn" onclick="openGdEnvioModal(\''+e.id+'\')">✏️ Editar</button>'+
+      '<button class="mov-del-btn" onclick="excluirGdEvento(\''+e.id+'\')">🗑️</button>'+
+      '</div></div>';
+  }).join('');
+}
+
 
 function openHistoricoGd(){
   const hist = JSON.parse(localStorage.getItem(LS_HIST_GD)||'[]');
