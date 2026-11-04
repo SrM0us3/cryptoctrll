@@ -668,6 +668,19 @@ body{font-family:'Noto Sans',sans-serif;background:var(--bg);color:var(--text);m
 </div>
 
 <!-- MODAL MINHAS CONTAS -->
+
+<div class="modal-bg" id="gdContasModal">
+  <div class="modal" style="max-width:480px;max-height:90vh;overflow-y:auto;">
+    <h3 style="color:#00c853;margin:0 0 4px;">👤 Contas GoodDollar</h3>
+    <p style="font-size:11px;color:var(--muted);margin:0 0 12px;line-height:1.45;">
+      Wallet + e-mail por conta.<br>
+      <b>Histórico até 31/10/2026</b> = G$ claimado do início até essa data (antes das coletas diárias no app, a partir de 01/11/2026).
+    </p>
+    <div id="gdContasList"></div>
+    <button class="modal-close" onclick="closeModal('gdContasModal')">Fechar</button>
+  </div>
+</div>
+
 <div class="modal-bg" id="contasModal">
   <div class="modal">
     <h3>👤 Minhas Contas</h3>
@@ -1082,9 +1095,10 @@ const JT_ACCOUNTS = [
 
 const GD_ACCOUNTS = [
   {name:'Eu',       email:'lanhouse.x1@gmail.com'},
-  {name:'Alex',     email:'alessandrodurok2022@gmail.com'},
   {name:'Irani',    email:'irani.isg@gmail.com'},
+  {name:'Alex',     email:'alessandrodurok2022@gmail.com'},
   {name:'Nanda',    email:'nandageffer@gmail.com'},
+  {name:'Josi',     email:'josicoelho2023@gmail.com'},
   {name:'Zé',       email:'josefm.2012@gmail.com'},
   {name:'Julia',    email:'rsgpokemomrsg@gmail.com'},
   {name:'Giovanna', email:'bibliohqs.04@gmail.com'},
@@ -1092,7 +1106,6 @@ const GD_ACCOUNTS = [
   {name:'Brenda',   email:'brendageffer@gmail.com'},
   {name:'Thiago',   email:'flavinho.CEAR@gmail.com'},
   {name:'Flavia',   email:'canaldabegeffer@gmail.com'},
-  {name:'Josi',     email:'josicoelho2023@gmail.com'},
   {name:'Luci',     email:'lucigeffer1@gmail.com'},
   {name:'Fabiana',  email:'gefferluiza@gmail.com'},
 ];
@@ -1280,7 +1293,7 @@ function openEco(eco){
     if(gdBar) gdBar.style.display='flex';
     gb.style.display='flex';
     if(btnTL) btnTL.style.display='inline-block';
-    if(btnC)  btnC.style.display='none';
+    if(btnC)  btnC.style.display='inline-block';
     if(btnW)  btnW.style.display='none';
     buildTabs(['gooddollar'],['GoodDollar']);
     showTab('gooddollar');
@@ -2325,6 +2338,141 @@ function openTimelineBtn(){
   if(currentEco==='gooddollar') openGdTimeline();
   else openTimeline();
 }
+
+
+// ══════════════════════════════════════════
+// GOODDOLLAR — Contas (wallet + hist. até 31/10/2026)
+// ══════════════════════════════════════════
+// baseline: coletas UBI do início da conta até 31/10/2026 (antes do app diário em 01/11/2026)
+const GD_CONTAS_DEFAULT = [
+  {name:'Eu',       email:'lanhouse.x1@gmail.com',              wallet:'0xD897E09d4d26185553399D5b4D33aBCC7efF7e6e', celo:62939, fuse:9173, xdc:0, nota:'Conta principal / hub · Celo/Fuse ≈ on-chain; XDC preencher'},
+  {name:'Irani',    email:'irani.isg@gmail.com',                wallet:'0x9EcB7E20477701e8CC764bb47A3DBC7179dB9E7F', celo:0, fuse:0, xdc:0, nota:''},
+  {name:'Alex',     email:'alessandrodurok2022@gmail.com',      wallet:'0x92b43ac6b16b3892ff7dd78d9b7c9f22f12696f5', celo:0, fuse:0, xdc:0, nota:''},
+  {name:'Nanda',    email:'nandageffer@gmail.com',              wallet:'0xeab5f16450cbf7be2572d3964665cbb36e16306a', celo:0, fuse:0, xdc:0, nota:'Fernanda'},
+  {name:'Josi',     email:'josicoelho2023@gmail.com',           wallet:'0xb16537060a3d73bf0a9d78a03f234cd6c1717595', celo:0, fuse:0, xdc:0, nota:''},
+  {name:'Zé',       email:'josefm.2012@gmail.com',              wallet:'0xcc4feadaaa306d9e6ed5b5a4ba26f1888d5cddf4', celo:0, fuse:0, xdc:0, nota:''},
+  {name:'Julia',    email:'rsgpokemomrsg@gmail.com',            wallet:'0xa2d0a595de7d42cca9dc421f404f11550e0b0ea8', celo:0, fuse:0, xdc:0, nota:'Pokemon'},
+  {name:'Giovanna', email:'bibliohqs.04@gmail.com',             wallet:'0x1216e59aed1c5ca5e9ee75717206f70b6c391a20', celo:0, fuse:0, xdc:0, nota:'BiblioHQs'},
+  {name:'Pai',      email:'gilcimargirp@gmail.com',             wallet:'0xa924d7abc20da19d8e0261bb38bb64e7c740344d', celo:0, fuse:0, xdc:0, nota:''},
+  {name:'Brenda',   email:'brendageffer@gmail.com',             wallet:'0x58ac0d30073c0231433c06c7ab770ac3602b880f', celo:0, fuse:0, xdc:0, nota:''},
+  {name:'Thiago',   email:'flavinho.CEAR@gmail.com',            wallet:'0x8d058dd9bb78ae759f495ca2444180c88ff82d5e', celo:0, fuse:0, xdc:0, nota:'Flavinho'},
+  {name:'Flavia',   email:'canaldabegeffer@gmail.com',          wallet:'0x61733e08461bb368de8f9ef37eb9f83eab494e22', celo:0, fuse:0, xdc:0, nota:'Canal da Be'},
+  {name:'Luci',     email:'lucigeffer1@gmail.com',              wallet:'0x584feb42b5438c38467dea90d6b0e2c0e917e302', celo:0, fuse:0, xdc:0, nota:''},
+  {name:'Fabiana',  email:'gefferluiza@gmail.com',              wallet:'0xd087d3c6cea167a787e60c9c29602822dc242a14', celo:0, fuse:0, xdc:0, nota:''},
+];
+
+function getGdContas(){
+  if(!state.gd_contas || !Array.isArray(state.gd_contas) || !state.gd_contas.length){
+    state.gd_contas = GD_CONTAS_DEFAULT.map(c=>({...c}));
+  } else {
+    // reordenar conforme GD_CONTAS_DEFAULT e completar contas novas
+    const byName = {};
+    state.gd_contas.forEach(c=>{ if(c && c.name) byName[c.name]=c; });
+    state.gd_contas = GD_CONTAS_DEFAULT.map(def=>{
+      const prev = byName[def.name];
+      if(!prev) return {...def};
+      return {
+        name: def.name,
+        email: prev.email!=null && prev.email!=='' ? prev.email : def.email,
+        wallet: prev.wallet!=null && prev.wallet!=='' ? prev.wallet : def.wallet,
+        celo: prev.celo!=null ? prev.celo : def.celo,
+        fuse: prev.fuse!=null ? prev.fuse : def.fuse,
+        xdc: prev.xdc!=null ? prev.xdc : def.xdc,
+        nota: prev.nota!=null && prev.nota!=='' ? prev.nota : def.nota,
+      };
+    });
+  }
+  // garantir campos
+  state.gd_contas.forEach(c=>{
+    if(c.celo==null) c.celo=0;
+    if(c.fuse==null) c.fuse=0;
+    if(c.xdc==null) c.xdc=0;
+    if(c.wallet==null) c.wallet='';
+    if(c.email==null) c.email='';
+    if(c.nota==null) c.nota='';
+  });
+  return state.gd_contas;
+}
+
+function saveGdContas(){
+  saveState();
+  showToast('✓ Contas GoodDollar salvas', false);
+}
+
+function renderGdContas(){
+  const list=document.getElementById('gdContasList');
+  if(!list) return;
+  const contas=getGdContas();
+  list.innerHTML = `
+    <div style="font-size:10px;color:var(--muted);margin-bottom:8px;padding:8px;background:var(--surface2);border-radius:8px;line-height:1.4;">
+      📅 Histórico de claims: <b>início → 31/10/2026</b><br>
+      A partir de <b>01/11/2026</b> as coletas diárias ficam na tela principal do GoodDollar.
+    </div>
+  ` + contas.map((c,i)=>{
+    const tot=(parseFloat(c.celo)||0)+(parseFloat(c.fuse)||0)+(parseFloat(c.xdc)||0);
+    const shortW = c.wallet ? (c.wallet.slice(0,8)+'…'+c.wallet.slice(-6)) : '—';
+    return `<div class="conta-card" style="border-color:rgba(0,200,83,.25);margin-bottom:10px;">
+      <div class="conta-card-hdr" style="cursor:pointer;" onclick="this.parentElement.querySelector('.conta-card-body').style.display=this.parentElement.querySelector('.conta-card-body').style.display==='none'?'block':'none'">
+        <div>
+          <div class="conta-disp" style="color:#00c853;">${c.name}${c.nota?(' · <span style="font-weight:400;color:var(--muted);font-size:11px;">'+c.nota+'</span>'):''}</div>
+          <div class="conta-email">${c.email||'—'} · ${shortW}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:Rajdhani,sans-serif;font-weight:700;color:#00c853;font-size:14px;">${fmtGd(tot)}</div>
+          <div style="font-size:9px;color:var(--muted);">G$ até 31/10</div>
+        </div>
+      </div>
+      <div class="conta-card-body" style="display:none;padding-top:8px;border-top:1px solid var(--border);margin-top:8px;">
+        <label class="mov-form-label">E-mail</label>
+        <input class="mov-form-input" value="${(c.email||'').replace(/"/g,'&quot;')}" onchange="gdContasUpdate(${i},'email',this.value)">
+        <label class="mov-form-label" style="margin-top:8px;">Wallet (mesmo endereço nas 3 redes)</label>
+        <input class="mov-form-input" style="font-size:11px;" value="${(c.wallet||'').replace(/"/g,'&quot;')}" onchange="gdContasUpdate(${i},'wallet',this.value)" placeholder="0x…">
+        <div style="font-size:10px;color:var(--muted);margin:10px 0 4px;font-weight:600;">G$ claimado até 31/10/2026</div>
+        <div style="display:flex;gap:6px;">
+          <div style="flex:1;"><label class="mov-form-label">Celo</label>
+            <input class="mov-form-input" inputmode="decimal" value="${c.celo||''}" onchange="gdContasUpdate(${i},'celo',this.value)" placeholder="0"></div>
+          <div style="flex:1;"><label class="mov-form-label">Fuse</label>
+            <input class="mov-form-input" inputmode="decimal" value="${c.fuse||''}" onchange="gdContasUpdate(${i},'fuse',this.value)" placeholder="0"></div>
+          <div style="flex:1;"><label class="mov-form-label">XDC</label>
+            <input class="mov-form-input" inputmode="decimal" value="${c.xdc||''}" onchange="gdContasUpdate(${i},'xdc',this.value)" placeholder="0"></div>
+        </div>
+        <div style="font-size:11px;color:#00c853;margin-top:6px;">Total: <b id="gdContaTot${i}">${fmtGd(tot)} G$</b></div>
+        <label class="mov-form-label" style="margin-top:8px;">Nota</label>
+        <input class="mov-form-input" value="${(c.nota||'').replace(/"/g,'&quot;')}" onchange="gdContasUpdate(${i},'nota',this.value)" placeholder="opcional">
+      </div>
+    </div>`;
+  }).join('') + `
+    <div style="margin-top:8px;padding:10px;background:var(--surface2);border-radius:8px;font-size:11px;color:var(--muted);line-height:1.45;">
+      Soma de todas as contas (até 31/10): <b style="color:#00c853;" id="gdContasGrandTot">—</b>
+    </div>
+    <button class="mov-confirm-btn" style="background:#00c853;margin-top:10px;" onclick="saveGdContas();renderGdContas();">Salvar alterações</button>
+  `;
+  // grand total
+  const grand=contas.reduce((s,c)=>s+(parseFloat(c.celo)||0)+(parseFloat(c.fuse)||0)+(parseFloat(c.xdc)||0),0);
+  setTimeout(()=>{
+    const el=document.getElementById('gdContasGrandTot');
+    if(el) el.textContent=fmtGd(grand)+' G$';
+  },0);
+}
+
+function gdContasUpdate(i, field, val){
+  const contas=getGdContas();
+  if(!contas[i]) return;
+  if(field==='celo'||field==='fuse'||field==='xdc'){
+    contas[i][field]=parseFloat(String(val).replace(',','.'))||0;
+    const tot=(parseFloat(contas[i].celo)||0)+(parseFloat(contas[i].fuse)||0)+(parseFloat(contas[i].xdc)||0);
+    const el=document.getElementById('gdContaTot'+i);
+    if(el) el.textContent=fmtGd(tot)+' G$';
+    const grand=contas.reduce((s,c)=>s+(parseFloat(c.celo)||0)+(parseFloat(c.fuse)||0)+(parseFloat(c.xdc)||0),0);
+    const g=document.getElementById('gdContasGrandTot');
+    if(g) g.textContent=fmtGd(grand)+' G$';
+  } else {
+    contas[i][field]=val;
+  }
+  // auto-save debounced via saveState
+  saveState();
+}
+
 
 function openGdTimeline(){
   document.getElementById('homeScreen').style.display='none';
@@ -3991,8 +4139,13 @@ function updateSemanaLabel(){
 // MINHAS CONTAS — modal
 // ══════════════════════════════════════════
 function openContasModal(){
-  renderContas();
-  openModal('contasModal');
+  if(currentEco==='gooddollar'){
+    renderGdContas();
+    openModal('gdContasModal');
+  } else {
+    renderContas();
+    openModal('contasModal');
+  }
 }
 
 // ══════════════════════════════════════════
