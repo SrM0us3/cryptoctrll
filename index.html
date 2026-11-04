@@ -2404,55 +2404,79 @@ function renderGdContas(){
   if(!list) return;
   const contas=getGdContas();
   list.innerHTML = `
-    <div style="font-size:10px;color:var(--muted);margin-bottom:8px;padding:8px;background:var(--surface2);border-radius:8px;line-height:1.4;">
+    <div style="font-size:10px;color:var(--muted);margin-bottom:10px;padding:8px;background:var(--surface2);border-radius:8px;line-height:1.45;">
       📅 Histórico de claims: <b>início → 31/10/2026</b><br>
-      A partir de <b>01/11/2026</b> as coletas diárias ficam na tela principal do GoodDollar.
+      A partir de <b>01/11/2026</b> as coletas diárias ficam na tela principal.
     </div>
   ` + contas.map((c,i)=>{
-    const tot=(parseFloat(c.celo)||0)+(parseFloat(c.fuse)||0)+(parseFloat(c.xdc)||0);
-    const shortW = c.wallet ? (c.wallet.slice(0,8)+'…'+c.wallet.slice(-6)) : '—';
-    return `<div class="conta-card" style="border-color:rgba(0,200,83,.25);margin-bottom:10px;">
-      <div class="conta-card-hdr" style="cursor:pointer;" onclick="this.parentElement.querySelector('.conta-card-body').style.display=this.parentElement.querySelector('.conta-card-body').style.display==='none'?'block':'none'">
+    const celo=parseFloat(c.celo)||0, fuse=parseFloat(c.fuse)||0, xdc=parseFloat(c.xdc)||0;
+    const tot=celo+fuse+xdc;
+    const w=(c.wallet||'').replace(/"/g,'&quot;');
+    const em=(c.email||'').replace(/"/g,'&quot;');
+    return `<div class="conta-card" style="border-color:rgba(0,200,83,.25);margin-bottom:12px;">
+      <div style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:#00c853;margin-bottom:8px;">${c.name}</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:2px;">E-mail</div>
+      <div style="font-size:12px;word-break:break-all;margin-bottom:8px;">${c.email||'—'}</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:2px;">Carteira</div>
+      <div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:10px;">
+        <div style="flex:1;font-size:11px;word-break:break-all;font-family:ui-monospace,monospace;line-height:1.35;">${c.wallet||'—'}</div>
+        ${c.wallet?`<button type="button" onclick="copiarTexto('${w}',this)" style="flex:none;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:11px;cursor:pointer;">📋 Copiar</button>`:''}
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:6px;font-weight:600;">G$ claimado até 31/10/2026</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;">
         <div>
-          <div class="conta-disp" style="color:#00c853;">${c.name}${c.nota?(' · <span style="font-weight:400;color:var(--muted);font-size:11px;">'+c.nota+'</span>'):''}</div>
-          <div class="conta-email">${c.email||'—'} · ${shortW}</div>
+          <label class="mov-form-label">Celo</label>
+          <input class="mov-form-input" inputmode="decimal" value="${c.celo||''}" onchange="gdContasUpdate(${i},'celo',this.value)" placeholder="0">
         </div>
-        <div style="text-align:right;">
-          <div style="font-family:Rajdhani,sans-serif;font-weight:700;color:#00c853;font-size:14px;">${fmtGd(tot)}</div>
-          <div style="font-size:9px;color:var(--muted);">G$ até 31/10</div>
+        <div>
+          <label class="mov-form-label">Fuse</label>
+          <input class="mov-form-input" inputmode="decimal" value="${c.fuse||''}" onchange="gdContasUpdate(${i},'fuse',this.value)" placeholder="0">
+        </div>
+        <div>
+          <label class="mov-form-label">XDC</label>
+          <input class="mov-form-input" inputmode="decimal" value="${c.xdc||''}" onchange="gdContasUpdate(${i},'xdc',this.value)" placeholder="0">
         </div>
       </div>
-      <div class="conta-card-body" style="display:none;padding-top:8px;border-top:1px solid var(--border);margin-top:8px;">
-        <label class="mov-form-label">E-mail</label>
-        <input class="mov-form-input" value="${(c.email||'').replace(/"/g,'&quot;')}" onchange="gdContasUpdate(${i},'email',this.value)">
-        <label class="mov-form-label" style="margin-top:8px;">Wallet (mesmo endereço nas 3 redes)</label>
-        <input class="mov-form-input" style="font-size:11px;" value="${(c.wallet||'').replace(/"/g,'&quot;')}" onchange="gdContasUpdate(${i},'wallet',this.value)" placeholder="0x…">
-        <div style="font-size:10px;color:var(--muted);margin:10px 0 4px;font-weight:600;">G$ claimado até 31/10/2026</div>
-        <div style="display:flex;gap:6px;">
-          <div style="flex:1;"><label class="mov-form-label">Celo</label>
-            <input class="mov-form-input" inputmode="decimal" value="${c.celo||''}" onchange="gdContasUpdate(${i},'celo',this.value)" placeholder="0"></div>
-          <div style="flex:1;"><label class="mov-form-label">Fuse</label>
-            <input class="mov-form-input" inputmode="decimal" value="${c.fuse||''}" onchange="gdContasUpdate(${i},'fuse',this.value)" placeholder="0"></div>
-          <div style="flex:1;"><label class="mov-form-label">XDC</label>
-            <input class="mov-form-input" inputmode="decimal" value="${c.xdc||''}" onchange="gdContasUpdate(${i},'xdc',this.value)" placeholder="0"></div>
-        </div>
-        <div style="font-size:11px;color:#00c853;margin-top:6px;">Total: <b id="gdContaTot${i}">${fmtGd(tot)} G$</b></div>
-        <label class="mov-form-label" style="margin-top:8px;">Nota</label>
-        <input class="mov-form-input" value="${(c.nota||'').replace(/"/g,'&quot;')}" onchange="gdContasUpdate(${i},'nota',this.value)" placeholder="opcional">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:rgba(0,200,83,.08);border-radius:8px;border:1px solid rgba(0,200,83,.2);">
+        <span style="font-size:11px;color:var(--muted);">Total da conta</span>
+        <span style="font-family:Rajdhani,sans-serif;font-weight:700;color:#00c853;font-size:15px;" id="gdContaTot${i}">${fmtGd(tot)} G$</span>
       </div>
+      <details style="margin-top:8px;">
+        <summary style="font-size:10px;color:var(--muted);cursor:pointer;">Editar e-mail / carteira</summary>
+        <label class="mov-form-label" style="margin-top:8px;">E-mail</label>
+        <input class="mov-form-input" value="${em}" onchange="gdContasUpdate(${i},'email',this.value)">
+        <label class="mov-form-label" style="margin-top:8px;">Wallet</label>
+        <input class="mov-form-input" style="font-size:11px;" value="${w}" onchange="gdContasUpdate(${i},'wallet',this.value)" placeholder="0x…">
+      </details>
     </div>`;
   }).join('') + `
-    <div style="margin-top:8px;padding:10px;background:var(--surface2);border-radius:8px;font-size:11px;color:var(--muted);line-height:1.45;">
-      Soma de todas as contas (até 31/10): <b style="color:#00c853;" id="gdContasGrandTot">—</b>
+    <div style="margin-top:4px;padding:12px;background:var(--surface2);border-radius:10px;border:1px solid rgba(0,200,83,.3);">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">TOTAL GERAL (todas as contas · até 31/10/2026)</div>
+      <div style="font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;color:#00c853;" id="gdContasGrandTot">—</div>
     </div>
-    <button class="mov-confirm-btn" style="background:#00c853;margin-top:10px;" onclick="saveGdContas();renderGdContas();">Salvar alterações</button>
+    <button class="mov-confirm-btn" style="background:#00c853;margin-top:12px;" onclick="saveGdContas();renderGdContas();">Salvar alterações</button>
   `;
-  // grand total
   const grand=contas.reduce((s,c)=>s+(parseFloat(c.celo)||0)+(parseFloat(c.fuse)||0)+(parseFloat(c.xdc)||0),0);
   setTimeout(()=>{
     const el=document.getElementById('gdContasGrandTot');
     if(el) el.textContent=fmtGd(grand)+' G$';
   },0);
+}
+
+function copiarTexto(txt, btn){
+  if(!txt) return;
+  const done=()=>{ if(btn){ const o=btn.textContent; btn.textContent='✓'; setTimeout(()=>btn.textContent=o,1200);} showToast('Copiado!',false); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done).catch(()=>{
+      const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); done(); }catch(e){ alert(txt); }
+      document.body.removeChild(ta);
+    });
+  } else {
+    const ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); done(); }catch(e){ alert(txt); }
+    document.body.removeChild(ta);
+  }
 }
 
 function gdContasUpdate(i, field, val){
