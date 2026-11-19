@@ -765,7 +765,7 @@ body{font-family:'Noto Sans',sans-serif;background:var(--bg);color:var(--text);m
         <span id="weekLabelTop" style="font-size:11px;color:var(--muted);font-family:'Noto Sans',sans-serif;font-weight:400;margin-left:4px;">—</span>
       </div>
       <div class="hdr-right">
-        <span id="syncIndicator" title="Sincronizando..." style="font-size:14px;cursor:default;opacity:.7;">☁️</span>
+        <span id="syncIndicator" title="Toque para sincronizar com a nuvem" onclick="forcePullCloud()" style="font-size:14px;cursor:pointer;opacity:.9;user-select:none;">☁️</span>
         <button class="icon-btn" id="btnTimeline" style="display:none" onclick="openTimelineBtn()">📅</button>
         <button class="icon-btn" id="btnContas"   style="display:none" onclick="openContasModal()">👤</button>
         <button class="icon-btn" id="btnWallet"   style="display:none" onclick="openWallets()">👛</button>
@@ -1144,6 +1144,18 @@ function syncAfterHistChange(){
   _saveTimer=setTimeout(syncToCloud, 2000);
 }
 
+// ── Sync cloud flags ──
+let _cloudReady = false;   // true depois da 1ª tentativa de load da nuvem
+let _cloudHasData = false; // true se a nuvem já tinha dados
+let _lastCloudTs = 0;
+let _saveTimer = null;
+window._lastSaveTs = 0;
+
+function countStateKeys(st){
+  if(!st || typeof st!=='object') return 0;
+  return Object.keys(st).filter(k=>!k.startsWith('_')).length;
+}
+
 function getAllData(){
   return {
     state:   state,
@@ -1159,7 +1171,6 @@ function getAllData(){
 
 function applyData(data, skipIfOlder){
   if(!data) return;
-  // Se tiver timestamp e for mais antigo que o local, não aplica
   if(skipIfOlder && data.ts && data.ts < (window._lastSaveTs||0)) return;
   if(data.state)   { state=data.state; localStorage.setItem(LS_STATE, JSON.stringify(state)); }
   if(data.hist)    localStorage.setItem(LS_HIST,    JSON.stringify(data.hist));
@@ -1168,6 +1179,10 @@ function applyData(data, skipIfOlder){
   if(data.fin_date)localStorage.setItem('cc_fin_date',   data.fin_date);
   if(data.fin_wid) localStorage.setItem('cc_fin_weekid', data.fin_wid);
   if(data.notif)   localStorage.setItem('cc_notif',      data.notif);
+  if(data.ts){
+    localStorage.setItem('cc_ts', String(data.ts));
+    _lastCloudTs = data.ts;
+  }
 }
 
 function loadState(){
@@ -1175,26 +1190,48 @@ function loadState(){
   lastNotifDate=localStorage.getItem('cc_notif')||'';
 }
 
-let _saveTimer=null;
+function setSyncUI(mode, title){
+  const indicator = document.getElementById('syncIndicator');
+  if(!indicator) return;
+  if(mode==='ok'){ indicator.textContent='☁️'; indicator.title=title||'Sincronizado com a nuvem'; indicator.style.opacity='.9'; }
+  else if(mode==='loading'){ indicator.textContent='🔄'; indicator.title=title||'Sincronizando…'; indicator.style.opacity='1'; }
+  else if(mode==='err'){ indicator.textContent='⚠️'; indicator.title=title||'Sem conexão — dados só neste navegador'; indicator.style.opacity='1'; }
+  else if(mode==='pending'){ indicator.textContent='⏳'; indicator.title=title||'Aguardando nuvem…'; indicator.style.opacity='1'; }
+}
+
 function saveState(){
-  // salva localmente imediato
+  // sempre grava local imediato
   localStorage.setItem(LS_STATE, JSON.stringify(state));
-  // salva na nuvem com debounce de 2s (evita muitas escritas)
+  // não sobe pra nuvem até a 1ª carga da nuvem terminar (evita apagar dados de outro browser)
+  if(!_cloudReady) return;
   clearTimeout(_saveTimer);
-  _saveTimer=setTimeout(syncToCloud, 2000);
+  _saveTimer=setTimeout(syncToCloud, 1500);
 }
 
 async function syncToCloud(){
   if(!window._fbSave) return;
+  if(!_cloudReady) return;
+
+  const localKeys = countStateKeys(state);
+  // proteção: não sobrescrever nuvem cheia com estado quase vazio
+  if(_cloudHasData && localKeys < 3){
+    console.warn('Sync bloqueado: estado local quase vazio, nuvem tem dados.');
+    setSyncUI('err', 'Sync pausado — dados locais vazios; recarregue para puxar a nuvem');
+    return;
+  }
+
   window._lastSaveTs = Date.now();
   const data = getAllData();
   data.ts = window._lastSaveTs;
+  setSyncUI('loading');
   const ok = await window._fbSave(data);
-  const indicator = document.getElementById('syncIndicator');
-  if(indicator){
-    indicator.textContent = ok ? '☁️' : '⚠️';
-    indicator.title = ok ? 'Sincronizado' : 'Sem conexão — dados locais';
-    setTimeout(()=>{ if(indicator) indicator.textContent='☁️'; }, 3000);
+  if(ok){
+    localStorage.setItem('cc_ts', String(data.ts));
+    _lastCloudTs = data.ts;
+    _cloudHasData = true;
+    setSyncUI('ok', 'Sincronizado · '+new Date(data.ts).toLocaleTimeString('pt-BR'));
+  } else {
+    setSyncUI('err');
   }
 }
 
@@ -1202,33 +1239,83 @@ async function loadFromCloud(){
   if(!window._fbLoad) return false;
   try{
     const data = await window._fbLoad();
-    if(!data) return false;
+    if(!data){
+      // nuvem vazia — este dispositivo pode ser a fonte
+      _cloudHasData = false;
+      return false;
+    }
+    _cloudHasData = true;
+    _lastCloudTs = data.ts || 0;
     const localTs = parseInt(localStorage.getItem('cc_ts')||'0');
-    // usar nuvem se for mais recente que o local
-    if(!localTs || (data.ts && data.ts > localTs)){
+    const localKeys = countStateKeys(state);
+    const cloudKeys = countStateKeys(data.state);
+
+    // Preferir nuvem se:
+    // 1) local sem timestamp / vazio
+    // 2) nuvem mais recente
+    // 3) local quase vazio e nuvem tem conteúdo
+    const localEmpty = localKeys < 3;
+    const cloudNewer = !localTs || (data.ts && data.ts > localTs);
+    if(cloudNewer || (localEmpty && cloudKeys > localKeys)){
       applyData(data, false);
-      localStorage.setItem('cc_ts', data.ts||Date.now());
+      window._lastSaveTs = data.ts || Date.now();
       return true;
     }
     return false;
-  }catch(e){ return false; }
+  }catch(e){
+    console.warn('loadFromCloud', e);
+    return false;
+  }
 }
 
 function startCloudSync(){
   if(!window._fbListen) return;
   window._fbListen((data)=>{
-    // Só aplica se os dados da nuvem forem MAIS RECENTES que o último save local
+    if(!data || !data.ts) return;
     const localTs = parseInt(localStorage.getItem('cc_ts')||'0');
-    if(data.ts && data.ts > localTs && data.ts > (window._lastSaveTs||0)){
-      applyData(data, true);
-      localStorage.setItem('cc_ts', data.ts);
-      if(document.getElementById('appScreen').style.display!=='none'){
-        renderTab(currentTab);
-        updateDayBar();
+    // ignora eco do próprio save
+    if(data.ts <= (window._lastSaveTs||0)) return;
+    if(data.ts > localTs){
+      _cloudHasData = true;
+      applyData(data, false);
+      window._lastSaveTs = data.ts;
+      if(document.getElementById('appScreen') && document.getElementById('appScreen').style.display!=='none'){
+        try{ renderTab(currentTab); updateDayBar(); }catch(e){}
       }
-      showToast('☁️ Sincronizado!', false);
+      // re-render home if visible
+      try{
+        if(document.getElementById('homeScreen') && document.getElementById('homeScreen').style.display!=='none'){
+          // nothing heavy
+        }
+      }catch(e){}
+      setSyncUI('ok', 'Atualizado de outro dispositivo');
+      if(typeof showToast==='function') showToast('☁️ Dados atualizados da nuvem', false);
     }
   });
+}
+
+/** Força puxar da nuvem (botão / recuperação) */
+async function forcePullCloud(){
+  setSyncUI('loading', 'Buscando na nuvem…');
+  const ok = await loadFromCloud();
+  _cloudReady = true;
+  if(ok){
+    currentWeekId=weekId(new Date());
+    currentDay=appDay();
+    try{
+      const badge=document.getElementById('dayBadge');
+      if(badge) badge.textContent=DAY_NAMES[currentDay];
+      updateWeekLabel(); updateSemanaLabel();
+      if(document.getElementById('appScreen').style.display!=='none'){
+        renderTab(currentTab); updateDayBar();
+      }
+    }catch(e){}
+    setSyncUI('ok', 'Dados da nuvem aplicados');
+    if(typeof showToast==='function') showToast('☁️ Dados restaurados da nuvem', false);
+  } else {
+    setSyncUI('ok', 'Nuvem sem dados mais novos');
+    if(typeof showToast==='function') showToast('Nada mais novo na nuvem', false);
+  }
 }
 function sk(sec,wid,day,acc,slot){return `${sec}|${wid}|${day}|${acc}|${slot}`;}
 function skSaldo(sec,wid,acc){return `saldo|${sec}|${wid}|${acc}`;}
@@ -3769,6 +3856,17 @@ const TL_TIPOS = [
 ];
 
 // Dados das contas do PDF
+
+// Caixas dos apps (endereço de SAÍDA dos saques → wallet). Não é por conta.
+const APP_HOT_WALLETS = [
+  {app:'TTCoin Network', role:'caixa-saque', addr:'0xa023ad544640fbe710e198794a6a6bc10de7a8ca', nota:'Principal'},
+  {app:'TTCoin Network', role:'caixa-saque', addr:'0x5c4ee85ad5044f52ed640ae8ab418b10b540971e', nota:'Alternativo'},
+  {app:'TTCoin Trees',   role:'caixa-saque', addr:'0xe8dbd2b210caea29eed3ccfd685148e997866a6c', nota:''},
+  {app:'Farming TC',     role:'caixa-saque', addr:'0xde092dbc02b7f8c10a73613003a8a22218775ab2', nota:''},
+];
+const WALLET_OPS = {nome:'Wallet Operacional', addr:'0x300be5494Ca50284bb6Ec949e6c9e73282dCa504'};
+const WALLET_PRINC = {nome:'Wallet Principal', addr:'0xd37a1f1ff164370d245d2cf2bd54d1c575f0a7c6'};
+
 const CONTAS_INFO = [
   {dispositivo:'Celular Meu', apelido:'Conta Principal', apps:[
     {app:'TTCoin Network', email:'lanhouse.x1@gmail.com', dataReg:null,
@@ -4000,16 +4098,67 @@ function excluirMovTl(movId){
 
 function renderContas(){
   const list=document.getElementById('contasList');
-  list.innerHTML=CONTAS_INFO.map(c=>{
+  if(!list) return;
+
+  // Cabeçalho: caixas dos apps + wallets
+  let head = `<div style="font-size:10px;color:var(--muted);margin-bottom:8px;line-height:1.45;padding:8px;background:var(--surface2);border-radius:8px;">
+    <b>Saque do app:</b> o TC sai do <b>caixa do app</b> (mesmo endereço para várias contas).<br>
+    <b>Depósito no Farming:</b> cada conta tem <b>wallet interna</b> própria.
+  </div>`;
+
+  head += `<div class="conta-card" style="border-color:rgba(0,200,255,.25);">
+    <div class="conta-card-name" style="margin-bottom:8px;">🏦 Caixas dos apps (saque → wallet)</div>`;
+  (typeof APP_HOT_WALLETS!=='undefined'?APP_HOT_WALLETS:[]).forEach(h=>{
+    const a=(h.addr||'').replace(/'/g,"\\'");
+    head += `<div style="margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+      <div class="conta-card-app">${h.app}${h.nota?(' · '+h.nota):''}</div>
+      <div style="display:flex;gap:6px;align-items:flex-start;">
+        <div style="flex:1;font-size:10px;word-break:break-all;font-family:ui-monospace,monospace;">${h.addr}</div>
+        <button type="button" onclick="copiarTexto('${a}',this)" style="flex:none;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:10px;cursor:pointer;">📋</button>
+      </div>
+    </div>`;
+  });
+  head += `</div>`;
+
+  head += `<div class="conta-card" style="border-color:rgba(255,200,0,.25);">
+    <div class="conta-card-name" style="margin-bottom:6px;">💼 Suas wallets</div>
+    <div class="conta-card-app">${WALLET_OPS.nome}</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;">
+      <div style="flex:1;font-size:10px;word-break:break-all;font-family:ui-monospace,monospace;">${WALLET_OPS.addr}</div>
+      <button type="button" onclick="copiarTexto('${WALLET_OPS.addr}',this)" style="padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-size:10px;cursor:pointer;">📋</button>
+    </div>
+    <div class="conta-card-app">${WALLET_PRINC.nome}</div>
+    <div style="display:flex;gap:6px;">
+      <div style="flex:1;font-size:10px;word-break:break-all;font-family:ui-monospace,monospace;">${WALLET_PRINC.addr}</div>
+      <button type="button" onclick="copiarTexto('${WALLET_PRINC.addr}',this)" style="padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-size:10px;cursor:pointer;">📋</button>
+    </div>
+  </div>
+  <div style="font-size:11px;font-weight:700;margin:12px 0 6px;color:var(--text);">👤 Contas por dispositivo</div>`;
+
+  const cards = CONTAS_INFO.map(c=>{
     const appsHTML=c.apps.map(a=>{
-      const gansoHTML=a.gansos?a.gansos.map(g=>
-        `<div style="font-size:9px;color:#fbbf24;margin-top:2px;">🪿 ${g.tipo}${g.data?' ('+new Date(g.data+'T12:00:00').toLocaleDateString('pt-BR')+')':''} · ${g.validade}</div>`
-      ).join(''):'';
-      const walletHTML=a.walletInterna?`<div style="font-size:9px;color:var(--tcmc);margin-top:2px;">🔑 ${a.walletInterna}</div>`:'';
-      return `<div style="padding:4px 0;border-bottom:1px solid var(--border);">
-        <div style="font-size:11px;font-weight:600;color:var(--accent2);">${a.app}</div>
-        <div style="font-size:9px;color:var(--muted);">${a.email}</div>
-        ${a.dataReg?`<div style="font-size:9px;color:var(--blue);">Reg: ${new Date(a.dataReg+'T12:00:00').toLocaleDateString('pt-BR')}</div>`:''}
+      const dataStr=a.dataReg?new Date(a.dataReg+'T12:00:00').toLocaleDateString('pt-BR'):'—';
+      let gansoHTML='';
+      if(a.gansos&&a.gansos.length){
+        gansoHTML=a.gansos.map(g=>`<div style="font-size:10px;color:var(--muted);">🪿 ${g.tipo}${g.validade?' ('+g.validade+')':''}</div>`).join('');
+      }
+      let walletHTML='';
+      if(a.walletInterna && a.walletInterna.length>10){
+        const w=a.walletInterna.replace(/'/g,"\\'");
+        walletHTML=`<div style="margin-top:6px;padding:6px 8px;background:rgba(0,200,83,.08);border-radius:6px;border:1px solid rgba(0,200,83,.2);">
+          <div style="font-size:9px;color:var(--muted);margin-bottom:2px;">Wallet interna (depósito neste app)</div>
+          <div style="display:flex;gap:6px;align-items:flex-start;">
+            <div style="flex:1;font-size:10px;word-break:break-all;font-family:ui-monospace,monospace;">${a.walletInterna}</div>
+            <button type="button" onclick="copiarTexto('${w}',this)" style="padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-size:10px;cursor:pointer;">📋</button>
+          </div>
+        </div>`;
+      } else if(a.app==='Farming TC'){
+        walletHTML=`<div style="font-size:10px;color:var(--muted);margin-top:4px;">Wallet interna: ainda não identificada</div>`;
+      }
+      return `<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+        <div class="conta-card-app">${a.app}</div>
+        <div style="font-size:11px;word-break:break-all;">${a.email||'—'}</div>
+        ${a.dataReg?`<div class="conta-card-data">Registro: ${dataStr}</div>`:''}
         ${gansoHTML}${walletHTML}
       </div>`;
     }).join('');
@@ -4018,9 +4167,11 @@ function renderContas(){
       ${appsHTML}
     </div>`;
   }).join('');
+
+  list.innerHTML = head + cards;
 }
 
-// ── MODAL EVENTO ──
+// ── MODAL EVENTO// ── MODAL EVENTO ──
 function openEvModal(editId){
   _evEditId=editId||null;
   if(editId){
@@ -4225,7 +4376,13 @@ async function init(){
   if(indicator) indicator.textContent='🔄';
 
   const carregarNuvem = async () => {
-    const atualizou = await loadFromCloud();
+    setSyncUI('loading', 'Conectando à nuvem…');
+    let atualizou = false;
+    try{
+      atualizou = await loadFromCloud();
+    }catch(e){ console.warn(e); }
+    // liberar saves só depois da 1ª tentativa (sucesso ou falha)
+    _cloudReady = true;
     if(atualizou){
       currentWeekId=weekId(new Date());
       currentDay=appDay();
@@ -4236,8 +4393,14 @@ async function init(){
       if(document.getElementById('appScreen').style.display!=='none'){
         renderTab(currentTab); updateDayBar();
       }
+      setSyncUI('ok', 'Dados carregados da nuvem');
+    } else {
+      // local pode ser a fonte — sobe se tiver conteúdo
+      if(countStateKeys(state) >= 3){
+        syncToCloud();
+      }
+      setSyncUI(window._fbSave ? 'ok' : 'err', window._fbSave ? 'Pronto' : 'Offline');
     }
-    if(indicator) indicator.textContent='☁️';
     startCloudSync();
   };
 
@@ -4246,10 +4409,15 @@ async function init(){
     carregarNuvem();
   } else {
     window.addEventListener('firebase-ready', carregarNuvem, {once:true});
-    // timeout: se Firebase demorar 5s, continua offline
+    setSyncUI('pending');
+    // timeout: se Firebase demorar, libera o app em modo local
     setTimeout(()=>{
-      if(indicator && indicator.textContent==='🔄') indicator.textContent='⚠️';
-    }, 5000);
+      if(!_cloudReady){
+        _cloudReady = true;
+        setSyncUI('err', 'Nuvem indisponível — dados só neste navegador');
+        startCloudSync();
+      }
+    }, 8000);
   }
 }
 init();
@@ -4261,15 +4429,9 @@ init();
   if(!('serviceWorker' in navigator)) return;
 
   const swCode = `
-const CACHE = 'cryptoctrl-v1';
+const CACHE = 'cryptoctrl-v2';
 
 self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(cache => {
-      // cacheia a própria página
-      return cache.addAll([self.location.href]);
-    }).catch(()=>{})
-  );
   self.skipWaiting();
 });
 
@@ -4283,16 +4445,34 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  e.respondWith(
-    caches.match(e.request).then(cached => {
-      if(cached) return cached;
-      return fetch(e.request).then(resp => {
-        if(!resp || resp.status !== 200) return resp;
-        const clone = resp.clone();
-        caches.open(CACHE).then(cache => cache.put(e.request, clone));
+  const url = e.request.url;
+  // Nunca interceptar Firebase / APIs — sempre rede
+  if(url.includes('firestore.googleapis.com') || url.includes('firebase') || url.includes('googleapis.com') || url.includes('gstatic.com')){
+    return;
+  }
+  // HTML / navegação: rede primeiro (evita app velho sem sync)
+  const isNav = e.request.mode === 'navigate' || (e.request.headers.get('accept')||'').includes('text/html');
+  if(isNav){
+    e.respondWith(
+      fetch(e.request).then(resp => {
+        if(resp && resp.status === 200){
+          const clone = resp.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+        }
         return resp;
-      }).catch(() => caches.match(e.request));
-    })
+      }).catch(() => caches.match(e.request))
+    );
+    return;
+  }
+  // outros: cache fallback
+  e.respondWith(
+    fetch(e.request).then(resp => {
+      if(resp && resp.status === 200 && e.request.method==='GET'){
+        const clone = resp.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
+      }
+      return resp;
+    }).catch(() => caches.match(e.request))
   );
 });
 `;
